@@ -36,12 +36,17 @@ private fun duration(seconds: Double): String {
 }
 
 @Composable
-internal fun TankCard(tank: TankEstimate, onOpen: (() -> Unit)? = null) {
+internal fun TankCard(tank: TankEstimate, range: RangeEstimate, onOpen: (() -> Unit)? = null) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Becsült üzemanyagszint", fontWeight = FontWeight.SemiBold)
             Text(tank.percent?.let { "≈${value(it, 0)} %  •  ≈${value(tank.remainingLiters)} / 45 l" } ?: "Még nincs teletankolás megadva",
                 fontSize = if (tank.percent != null) 27.sp else 16.sp, color = MaterialTheme.colorScheme.primary)
+            Text(range.displayKm?.let { "Becsült hatótáv: ≈$it km" } ?: "Becsült hatótáv: —",
+                fontSize = 21.sp, color = MaterialTheme.colorScheme.primary)
+            Text(if (range.km != null) "${value(range.averageL100)} l/100 km • ${range.basis}" + if (range.uncertain) " • bizonytalan" else ""
+                else if (tank.remainingLiters == null) "Előbb jelöld a teletankolást."
+                else "Legalább 1 km fogyasztással együtt mért szakasz szükséges.", fontSize = 12.sp)
             tank.percent?.let { LinearProgressIndicator(progress = { (it / 100).toFloat() }, modifier = Modifier.fillMaxWidth()) }
             Text(if (tank.hasGaps) "Bizonytalan: volt nem megfigyelt fogyasztás. A valós szint alacsonyabb is lehet."
                 else "45 literes Kalos-tank. A teletankolástól megfigyelt fogyasztás alapján, nem tankszenzorból.",
@@ -99,7 +104,7 @@ internal fun JournalScreen(controller: DashboardController, state: DashboardStat
         if (log.active != null || state.simulated) item {
             OutlinedButton(onClick = { resetDialog = true }) { Text("Útmérés nullázása") }
         }
-        item { TankCard(log.tank) }
+        item { TankCard(log.tank, state.range) }
         item {
             Button(onClick = { pumped = ""; paid = ""; refuelDialog = true }, enabled = !state.simulated, modifier = Modifier.fillMaxWidth()) {
                 Text("Teletankoltam")

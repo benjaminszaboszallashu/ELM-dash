@@ -113,15 +113,27 @@ class JourneyLogTest {
         update(log, 13_000, runtime = 0.0)
         assertEquals(1, log.state.journeys.size)
     }
+    @Test fun `observed stop shorter than two minutes keeps the journey`() {
+        val log = JourneyLog()
+        update(log, 0)
+        val id = log.state.active!!.id
+        for (t in 1000L..119000L step 1000L) update(log, t, speed = 0.0, rpm = 0.0, rate = 0.0)
+        update(log, 120_000)
+        assertEquals(id, log.state.active!!.id)
+        assertTrue(log.state.journeys.isEmpty())
+    }
+
     @Test fun `engine off and long disconnection close the active draft`() {
         val log = JourneyLog()
         update(log, 0)
-        for (t in 1000L..9000L step 1000L) update(log, t, speed = 0.0, rpm = 0.0, rate = 0.0)
+        for (t in 1000L..120000L step 1000L) update(log, t, speed = 0.0, rpm = 0.0, rate = 0.0)
+        assertNotNull(log.state.active)
+        update(log, 121_000, speed = 0.0, rpm = 0.0, rate = 0.0)
         assertNull(log.state.active)
         assertEquals(JourneyEnd.ENGINE_OFF, log.state.journeys.single().end)
-        update(log, 10_000)
+        update(log, 122_000)
         log.gap()
-        log.update(Telemetry(), FuelReading(null, null, FuelSource.UNAVAILABLE), 191_000, epoch + 191_000, "Kalos")
+        log.update(Telemetry(), FuelReading(null, null, FuelSource.UNAVAILABLE), 303_000, epoch + 303_000, "Kalos")
         assertNull(log.state.active)
         assertEquals(JourneyEnd.CONNECTION_LOST, log.state.journeys.first().end)
     }

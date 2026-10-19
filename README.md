@@ -5,6 +5,14 @@ Az **ELM Dash** egy magyar nyelvű Android-alkalmazás, amely Bluetooth ELM327 O
 Az Android Auto-megjelenítés a rádió médiafelületét használó **kísérleti megoldás**. Az elérhető adatok az autótól és az adaptertől függenek; a számított fogyasztás és tankszint becslés.
 
 
+## Becsült hatótáv (0.16.1)
+
+A tankban becsült benzin és a mai átlagfogyasztás alapján hátralévő kilométer. Legalább 1 km mérésig a mentett utak súlyozott átlaga az alap. Telefonon a tankkártyán, AA-n a Tank adatlapon és a váltakozó alsó sorban jelenik meg; hiányzó adatoknál nincs kitalált hatótáv.
+
+## Útinform (0.16.0)
+
+Helyzet és haladási irány alapján szűrt közeli események az Android Auto médiakártya alsó sorában. Opcionális, az útnaplótól független helyfigyelés; saját NAP HTTP Pull hozzáférés szükséges. [Regisztráció, beállítások és korlátok](docs/TRAFFIC.md). Éles NAP-adatfolyammal és Carpuride-on még nem ellenőrzött első változat.
+
 ## Képernyőképek
 
 ### Android Auto · demóadatok
@@ -61,7 +69,7 @@ Az eredeti képernyőképen a dátumokat, indulási és befejezési időpontokat
 
 **Fejlesztőként itt kezdd:** [AGENTS.md](AGENTS.md) → [részletes projektátadás](docs/PROJECT_HANDOFF.md). Autó, konfiguráció, felhasználói kérések, architektúra és még nem igazolt működés egy helyen. [GitHub feltöltési útmutató](docs/GITHUB.md).
 
-**Aktuális: 0.13.0.** Telefonos menü: Műszerfal · Napló · Rádió; kapcsolat a jobb felső fogaskeréken. Napi és útadatok a Naplóban. Út végén összesítő értesítés, OBD-kimaradásnál 3 perces türelem.
+**Aktuális: 0.16.17.** Telefonos menü: Műszerfal · Napló · Rádió; kapcsolat a jobb felső fogaskeréken. Napi és útadatok a Naplóban. Út végén összesítő értesítés, OBD-kimaradásnál 3 perces türelem.
 
 Elsődleges célpont az **Android Auto fejegység**; a telefon a Bluetooth-adatolvasást, a beállításokat és a demót biztosítja. Közvetlen **Bluetooth Classic ELM327 → Kotlin → Android Auto** adatút. Nem kell Torque vagy külön PID-szolgáltató. Magyar, sötét Compose telefonos kísérőfelület; széles és összecsukható kijelzőkhöz alkalmazkodó rács.
 
@@ -245,7 +253,7 @@ A négyütemű motor két fordulatonként szív be egy lökettérfogatot. A tov�
 
 A telefon, az AA szövege és borítója ugyanazt a simított értéket mutatja. Az utolsó **10 s** üzemanyag- és távolságmintáit azonos időablakban integráljuk; `l/100 km = ablak liter / ablak km × 100`. A kijelzés egysége mindig **l/100 km**; 5 km/h alatt „—” jelenik meg. A belső liter/óra adat megmarad az összesítéshez, de a fogyasztási kártya nem vált erre az egységre. Induláskor a rendelkezésre álló, rövidebb ablakból számolunk. Adathiánynál az utolsó szám szürke marad, a simítóablak kiürül; hiányzó időt nem hidal át. A **napi és útösszesítés a nyers érvényes mintákat használja**, így a kijelzés késleltetése nem módosítja a literszámlálót.
 
-Az út a motor járásának első érvényes RPM-mintájánál kezdődik. A motor futásidejének visszaesése új utat jelez (a 65535 → 0 túlcsordulást kivéve). Ha futásidő nincs, legalább 8 másodpercig megfigyelt nulla RPM utáni indulás kezd új utat. Ez utóbbi egyszerű MVP-szabály start-stop autóban új utat eredményezhet; kézi nullázás is van.
+Az út a motor járásának első érvényes RPM-mintájánál kezdődik. A motor futásidejének visszaesése új utat jelez (a 65535 → 0 túlcsordulást kivéve). Ha futásidő nincs, legalább 120 másodpercig megfigyelt nulla RPM utáni indulás kezd új utat. Ez utóbbi egyszerű MVP-szabály start-stop autóban új utat eredményezhet; kézi nullázás is van.
 
 **Nem számolunk visszamenőleg:** ha járó motorhoz később csatlakozol, csak a kapcsolódás után megfigyelt rész mérhető. Az UI csak észlelt indulás / legfeljebb 10 s ECU-futásidő esetén jelzi az indítástól történő megfigyelést. Gyújtásállapot önmagában nem szabványos kötelező PID; a mérés motorfutáshoz kötött.
 
@@ -383,7 +391,7 @@ Platformforrások: [Media3 lejátszóesemények](https://developer.android.com/m
 
 ### Út végi összesítés
 
-A 0.10-es verzió útlezáráskor telefonos értesítést küld a km / liter / l/100 km adatokkal. Motorleállítás: 8 s megfigyelt nulla RPM; kapcsolatvesztés: 3 perc friss motoradat nélkül. Rövid BT-kimaradás nem külön út. Részletek: [tank és útnapló](TANK_AND_JOURNAL.md#út-végi-értesítés-010).
+A 0.10-es verzió útlezáráskor telefonos értesítést küld a km / liter / l/100 km adatokkal. Motorleállítás: 120 s megfigyelt nulla RPM; kapcsolatvesztés: 3 perc friss motoradat nélkül. Rövid BT-kimaradás nem külön út. Részletek: [tank és útnapló](TANK_AND_JOURNAL.md#út-végi-értesítés-010).
 
 ### Telefonos navigáció (0.11)
 

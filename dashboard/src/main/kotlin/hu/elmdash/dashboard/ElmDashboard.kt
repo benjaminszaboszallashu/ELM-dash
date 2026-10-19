@@ -47,9 +47,10 @@ fun ElmDashboard(controller: DashboardController, autoSurface: String, radioCont
     val context = LocalContext.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
+    var trafficSettingsOpen by rememberSaveable { mutableStateOf(false) }
     var routeSettingsOpen by rememberSaveable { mutableStateOf(false) }
     var fuelSettingsOpen by rememberSaveable { mutableStateOf(false) }
-    BackHandler(settingsOpen) { if (routeSettingsOpen) routeSettingsOpen = false else if (fuelSettingsOpen) fuelSettingsOpen = false else settingsOpen = false }
+    BackHandler(settingsOpen) { if (trafficSettingsOpen) trafficSettingsOpen = false else if (routeSettingsOpen) routeSettingsOpen = false else if (fuelSettingsOpen) fuelSettingsOpen = false else settingsOpen = false }
     val stop = {
         AutoObd.pause(context)
         controller.stop()
@@ -61,7 +62,7 @@ fun ElmDashboard(controller: DashboardController, autoSurface: String, radioCont
         Scaffold(containerColor = Ink, bottomBar = {
             NavigationBar(containerColor = Ink, tonalElevation = 0.dp) {
                 (listOf("Műszerfal", "Napló") + if (radioContent != null) listOf("Rádió") else emptyList()).forEachIndexed { i, title ->
-                    NavigationBarItem(selected = !settingsOpen && tab == i, onClick = { tab = i; settingsOpen = false; fuelSettingsOpen = false; routeSettingsOpen = false },
+                    NavigationBarItem(selected = !settingsOpen && tab == i, onClick = { tab = i; settingsOpen = false; fuelSettingsOpen = false; routeSettingsOpen = false; trafficSettingsOpen = false },
                         colors = NavigationBarItemDefaults.colors(selectedIconColor = Lime, selectedTextColor = Lime,
                             indicatorColor = Lime.copy(alpha = 0.15f), unselectedIconColor = Muted, unselectedTextColor = Muted),
                         icon = { Text(listOf("◫", "▤", "♫")[i], fontSize = 23.sp) }, label = { Text(title) })
@@ -72,11 +73,11 @@ fun ElmDashboard(controller: DashboardController, autoSurface: String, radioCont
                 Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("ELM / DASH", fontWeight = FontWeight.Black, fontSize = 23.sp, letterSpacing = 2.sp)
-                        Text(when (autoSurface) { "media" -> "ANDROID AUTO MÉDIA  ·  0.15.1"; "unsupported" -> "ANDROID AUTO LAB  ·  0.15.1"; else -> "DIRECT BLUETOOTH OBD  ·  0.15.1" }, color = Muted, fontSize = 10.sp, letterSpacing = 1.5.sp)
+                        Text(when (autoSurface) { "media" -> "ANDROID AUTO MÉDIA  ·  0.16.17"; "unsupported" -> "ANDROID AUTO LAB  ·  0.16.17"; else -> "DIRECT BLUETOOTH OBD  ·  0.16.17" }, color = Muted, fontSize = 10.sp, letterSpacing = 1.5.sp)
                     }
-                    if (settingsOpen) IconButton(onClick = { if (routeSettingsOpen) routeSettingsOpen = false else if (fuelSettingsOpen) fuelSettingsOpen = false else settingsOpen = false },
+                    if (settingsOpen) IconButton(onClick = { if (trafficSettingsOpen) trafficSettingsOpen = false else if (routeSettingsOpen) routeSettingsOpen = false else if (fuelSettingsOpen) fuelSettingsOpen = false else settingsOpen = false },
                         modifier = Modifier.semantics { contentDescription = "Vissza" }) { Text("←", fontSize = 26.sp) }
-                    else IconButton(onClick = { settingsOpen = true; fuelSettingsOpen = false; routeSettingsOpen = false },
+                    else IconButton(onClick = { settingsOpen = true; fuelSettingsOpen = false; routeSettingsOpen = false; trafficSettingsOpen = false },
                         modifier = Modifier.semantics { contentDescription = "Kapcsolat és beállítások" }) { Text("⚙", fontSize = 28.sp) }
                     if (state.active) TextButton(onClick = stop) { Text("Leállítás") }
                 }
@@ -85,9 +86,11 @@ fun ElmDashboard(controller: DashboardController, autoSurface: String, radioCont
                         modifier = Modifier.padding(bottom = 12.dp))
                 }
                 if (settingsOpen) {
-                    if (routeSettingsOpen) RouteSettingsScreen(controller)
+                    if (trafficSettingsOpen) TrafficSettingsScreen()
+                    else if (routeSettingsOpen) RouteSettingsScreen(controller)
                     else if (fuelSettingsOpen) FuelSettingsScreen(controller, state)
                     else {
+                        TextButton(onClick = { trafficSettingsOpen = true }) { Text("Útinform →") }
                         TextButton(onClick = { routeSettingsOpen = true }) { Text("Útvonal és WebDAV →") }
                         TextButton(onClick = { fuelSettingsOpen = true }) { Text("Fogyasztás és autó beállításai →") }
                         ConnectionScreen(controller, state, autoSurface, onStarted = { settingsOpen = false; tab = 0 })
@@ -126,7 +129,7 @@ private fun TelemetryScreen(state: DashboardState, onJournal: () -> Unit, onConn
         LazyVerticalGrid(columns = GridCells.Fixed(columns), verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
             item(span = { GridItemSpan(maxLineSpan) }) { Status(state) }
-            item(span = { GridItemSpan(maxLineSpan) }) { TankCard(state.journal.tank, onJournal) }
+            item(span = { GridItemSpan(maxLineSpan) }) { TankCard(state.journal.tank, state.range, onJournal) }
             if (!state.active) item(span = { GridItemSpan(maxLineSpan) }) {
                 Button(onClick = onConnect, modifier = Modifier.fillMaxWidth()) { Text("Csatlakozás") }
             }

@@ -61,7 +61,7 @@ object RouteReport {
         }
         val data = read(files)
         data.put("summary", summary(record))
-        return html(context, data)
+        return html(context, data, autoLoadMap = true)
     }
     fun summary(record: JourneyRecord): JSONObject = JSONObject().put("distanceKm", record.summary.distanceKm).put("fuelLiters", record.summary.fuelLiters)
             .put("averageLitersPer100Km", record.summary.averageL100 ?: JSONObject.NULL)
@@ -84,12 +84,12 @@ object RouteReport {
         check(temp.renameTo(html))
         return html
     }
-    fun html(context: Context, data: JSONObject): String {
+    fun html(context: Context, data: JSONObject, autoLoadMap: Boolean = false): String {
         val template = context.assets.open("route-report.html").bufferedReader().use { it.readText() }
         val js = context.assets.open("leaflet/leaflet.js").bufferedReader().use { it.readText() }
         val css = context.assets.open("leaflet/leaflet.css").bufferedReader().use { it.readText() }
         val license = context.assets.open("leaflet/LICENSE").bufferedReader().use { it.readText() }
-        return template.replace("/*LEAFLET_CSS*/", css).replace("/*LEAFLET_JS*/", js)
+        return template.replace("/*AUTO_LOAD_MAP*/false", autoLoadMap.toString()).replace("/*LEAFLET_CSS*/", css).replace("/*LEAFLET_JS*/", js)
             .replace("/*LEAFLET_LICENSE*/", license.replace("*/", "* /"))
             .replace("/*ROUTE_DATA*/null", data.toString().replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"))
     }
