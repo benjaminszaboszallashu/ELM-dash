@@ -16,7 +16,7 @@ internal enum class MediaPage(val id: String, val label: String) {
 /** Value-based equality avoids publishing every 250 ms clock tick to the media host. */
 internal data class MediaFrame(
     val title: String, val subtitles: List<String>, val status: String,
-    val tiles: List<DashboardTiles.Tile>, val active: Boolean, val simulated: Boolean, val dailyDetail: String
+    val tiles: List<DashboardTiles.Tile>, val active: Boolean, val simulated: Boolean, val dailyDetail: String, val rangeText: String? = null, val journeyDetail: String = ""
 )
 
 internal object MediaDashboard {
@@ -24,17 +24,10 @@ internal object MediaDashboard {
         String.format(Locale.forLanguageTag("hu-HU"), "%.${digits}f", it)
     } ?: "—"
 
-    /** Keep each row readable for eight seconds; use service time even when OBD is stopped. */
-    fun subtitle(frame: MediaFrame, page: MediaPage, radio: RadioState, elapsedMs: Long): String {
-        if ((elapsedMs.coerceAtLeast(0) / 8_000) % 2 == 0L) return frame.subtitles[page.ordinal]
-        val status = when {
-            radio.playing -> ""
-            radio.error != null -> " • hiba"
-            radio.buffering -> " • kapcsolódás…"
-            else -> " • szünet"
-        }
-        return radio.selected.name + status
-    }
+    /** The user requested a stable station-only subtitle, including when traffic is available. */
+    @Suppress("UNUSED_PARAMETER")
+    fun subtitle(frame: MediaFrame, page: MediaPage, radio: RadioState, elapsedMs: Long, traffic: String? = null): String =
+        radio.selected.name
 
     fun frame(s: DashboardState): MediaFrame {
         fun pid(p: Pid, digits: Int = 0): String {
@@ -43,7 +36,7 @@ internal object MediaDashboard {
             return "${number(last, digits)} ${p.unit}" + if (current == null && last != null) " (utolsó)" else ""
         }
         val tank = s.journal.tank
-        val tankText = tank.percent?.let { "Tank ≈${number(it)} % • ≈${number(tank.remainingLiters)} / 45 l" + if (tank.hasGaps) " • bizonytalan" else " • becslés" } ?: "Tank: jelöld a teletankolást a telefon Napló lapján"
+        val tankText = tank.percent?.let { "Hatótáv ${s.range.displayKm?.let { km -> "≈$km km" } ?: "—"} • Tank ≈${number(it)} %" + if (s.range.uncertain) " • bizonytalan" else " • becslés" } ?: "Tank: jelöld a teletankolást a telefon Napló lapján"
         val tiles = DashboardTiles.create(s)
         val demo = s.simulated || s.phase == Phase.DEMO
         val prefix = if (demo) "DEMÓ • " else ""
@@ -66,7 +59,11 @@ internal object MediaDashboard {
             ),
             status = "$prefix${s.phase.label} • $source • 10 s átlag • ${s.today}" + if (!tiles[0].fresh || !tiles[1].fresh) " • Nincs friss motoradat" else "",
             tiles = tiles, active = s.active, simulated = demo,
-            dailyDetail = "${s.today}/${s.daily.averageL100}/${s.daily.hasGaps}/${s.daily.containsEstimate}"
+            journeyDetail = (if (demo) s.trip else s.journal.active?.summary).let {
+                "${number(it?.distanceKm, 1)}/${number(it?.averageL100, 1)}/${it?.containsEstimate}"
+            },
+            rangeText = s.range.displayKm?.let { "Hatótáv ≈$it km" + if (s.range.uncertain) " • bizonytalan" else " • becslés" },
+            dailyDetail = "${s.today}/${number(s.daily.distanceKm, 1)}/${s.daily.averageL100}/${s.daily.hasGaps}/${s.daily.containsEstimate}"
         )
     }
 }

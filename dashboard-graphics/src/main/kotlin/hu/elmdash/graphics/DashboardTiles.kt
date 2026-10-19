@@ -110,7 +110,7 @@ object DashboardTiles {
     fun indicator(s: DashboardState, index: Int): Bitmap = icon(create(s)[index])
 
     /** AA also uses artwork as a cropped background, with controls over its lower area.
-     * Keep every reading inside the upper, central 55%; the rest is a quiet opaque backdrop.
+     * Keep every reading inside the upper, central 64%; the rest is a quiet opaque backdrop.
      * No host API exposes the card bounds, so the metadata also carries the essential values.
      */
     fun compactOverview(s: DashboardState): Bitmap {
@@ -120,8 +120,13 @@ object DashboardTiles {
         val c = Canvas(bitmap)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
         c.drawColor(0xFF101B24.toInt())
+        // Stretch the data block 4% vertically, anchored at its original top edge.
+        c.scale(1f, 1.04f, 256f, 44f)
         fun box(left: Float, top: Float, right: Float, bottom: Float, color: Int) {
-            p.color = color; p.style = Paint.Style.FILL
+            // AA dims album artwork; lift each tile toward white while preserving its hue.
+            fun lift(channel: Int) = channel + ((255 - channel) * 0.18f).toInt()
+            p.color = Color.rgb(lift(Color.red(color)), lift(Color.green(color)), lift(Color.blue(color)))
+            p.style = Paint.Style.FILL
             c.drawRoundRect(left, top, right, bottom, 12f, 12f, p)
         }
         fun text(value: String, x: Float, y: Float, size: Float, fresh: Boolean = true) {
@@ -129,24 +134,39 @@ object DashboardTiles {
             p.textAlign = Paint.Align.CENTER; p.typeface = Typeface.create("sans-serif", Typeface.BOLD); p.textSize = size
             c.drawText(value, x, y, p)
         }
-        box(64f, 44f, 278f, 154f, rpm.color)
-        box(286f, 44f, 448f, 154f, water.color)
-        text(if (s.simulated) "DEMÓ • RPM" else if (s.carUnavailable) "NINCS OBD" else "RPM", 171f, 72f, 18f, rpm.fresh)
-        val cue = when (rpm.symbol) { "up" -> "↑"; "down" -> "↓"; "check" -> "✓"; "alert" -> "!"; else -> "" }
-        text(rpm.value, 159f, 130f, 47f, rpm.fresh)
-        text(cue, 246f, 127f, 35f, rpm.fresh)
-        text("VÍZ °C", 367f, 72f, 18f, water.fresh)
-        text(water.value, 367f, 130f, 47f, water.fresh)
+        // Two wide rows above three compact cells; AA controls stay clear.
+        fun cell(column: Int, row: Int, label: String, value: String, color: Int, fresh: Boolean, footer: String? = null) {
+            val width = if (row == 2) 122f else 188f
+            val left = 64f + column * (width + 8f)
+            val top = 44f + row * 92f
+            box(left, top, left + width, top + 85f, color)
+            p.typeface = Typeface.create("sans-serif", Typeface.BOLD)
+            val labelSize = if (row == 2) 13f else 17f
+            p.textSize = labelSize
+            val fittedLabel = if (p.measureText(label) > width - 12f) labelSize * (width - 12f) / p.measureText(label) else labelSize
+            text(label, left + width / 2, top + 24f, fittedLabel, fresh)
+            // Fit unusually large values rather than letting adjacent readings overlap.
+            p.typeface = Typeface.create("sans-serif", Typeface.BOLD); p.textSize = 41f
+            val size = if (p.measureText(value) > width - 12f) 41f * (width - 12f) / p.measureText(value) else 41f
+            text(value, left + width / 2, top + if (footer == null) 69f else 59f, size, fresh)
+            if (footer != null) text(footer, left + width / 2, top + 77f, 12f, fresh)
+        }
+        fun last(pid: Pid) = s.telemetry.value(pid, s.nowMs) ?: s.telemetry.readings[pid]?.lastKnownValue
+        fun fresh(pid: Pid) = s.telemetry.value(pid, s.nowMs) != null
+        val cue = when (rpm.symbol) { "up" -> " ↑"; "down" -> " ↓"; "check" -> " ✓"; "alert" -> " !"; else -> "" }
+        cell(0, 0, if (s.simulated) "DEMÓ RPM" else if (s.carUnavailable) "NINCS OBD" else "RPM" + cue, rpm.value, rpm.color, rpm.fresh)
+        cell(0, 2, "VÍZ °C", water.value, water.color, water.fresh)
         val display = s.fuelDisplay
         val dailyFresh = s.daily.averageL100 != null
-        box(64f, 164f, 252f, 277f, if (display.fresh) Neutral else Grey)
-        box(260f, 164f, 448f, 277f, if (dailyFresh) Neutral else Grey)
-        text("10 s · l/100", 158f, 192f, 18f, display.fresh)
-        text("MA l/100", 354f, 192f, 18f, dailyFresh)
-        val instantPrefix = if (display.source.estimated && display.value != null) "≈" else ""
-        val dailyPrefix = if (s.daily.containsEstimate && dailyFresh) "≈" else ""
-        text(instantPrefix + n(display.value, 1), 158f, 252f, 45f, display.fresh)
-        text(dailyPrefix + n(s.daily.averageL100, 1), 354f, 252f, 45f, dailyFresh)
+        cell(0, 1, "10s L/100", (if (display.source.estimated && display.value != null) "≈" else "") + n(display.value, 1), if (display.fresh) Neutral else Grey, display.fresh)
+        val journey = if (s.simulated) s.trip else s.journal.active?.summary
+        cell(1, 1, "MA L/100", (if (s.daily.containsEstimate && dailyFresh) "≈" else "") + n(s.daily.averageL100, 1), if (dailyFresh) Neutral else Grey, dailyFresh)
+        cell(1, 2, "ÚT KM", n(journey?.distanceKm, 1),
+            if (journey != null) Neutral else Grey, journey != null)
+        cell(1, 0, "TERHELÉS %", n(last(Pid.LOAD)), if (fresh(Pid.LOAD)) Neutral else Grey, fresh(Pid.LOAD))
+        val range = s.range
+        cell(2, 2, if (range.uncertain) "HATÓTÁV ? KM" else "HATÓTÁV KM", range.displayKm?.let { "≈$it" } ?: "—",
+            when (range.level) { RangeLevel.UNKNOWN -> Grey; RangeLevel.CRITICAL -> Red; RangeLevel.LOW -> Amber; RangeLevel.NORMAL -> Neutral; RangeLevel.GOOD -> Green }, range.km != null)
         return bitmap
     }
 

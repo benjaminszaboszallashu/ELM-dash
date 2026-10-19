@@ -53,7 +53,7 @@ class TripComputer(initial: TripSummary = TripSummary(), private val resetOnEngi
         val newRuntime = runtime != null && runtimeReading?.atMs != runtimeAt
         val wrapped = lastRuntime != null && lastRuntime!! > 65_000 && runtime != null && runtime < 1_000
         val runtimeRestart = newRuntime && lastRuntime != null && runtime!! + 3 < lastRuntime!! && !wrapped
-        val observedRestart = runtime == null && rpm != null && rpm > 0 && stoppedSince?.let { nowMs - it >= 8_000 } == true
+        val observedRestart = runtime == null && rpm != null && rpm > 0 && stoppedSince?.let { nowMs - it >= 120_000 } == true
         if (rpm == 0.0) { if (stoppedSince == null) stoppedSince = nowMs }
         else if (rpm == null) stoppedSince = null
 

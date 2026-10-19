@@ -20,11 +20,33 @@ class MediaDashboardTest {
     private fun live() = DashboardState(phase = Phase.LIVE, nowMs = 1_000,
         telemetry = Telemetry(mapOf(Pid.RPM to 3_200.0, Pid.COOLANT to 89.0,
             Pid.LOAD to 35.0, Pid.SPEED to 72.0, Pid.MAP to 42.0, Pid.TPS to 20.0,
-            Pid.VOLTAGE to 14.2).mapValues { Reading(it.value, 1_000, Quality.OK) }),
+            Pid.IAT to 51.0, Pid.VOLTAGE to 14.2).mapValues { Reading(it.value, 1_000, Quality.OK) }),
         driving = DrivingAdvice(DriveCue.UPSHIFT, CoolantBand.NORMAL, 4),
         fuelDisplay = FuelDisplay(5.8, "l/100 km", true, FuelSource.MAF_ESTIMATE),
-        trip = TripSummary(started = true, pairedDistanceKm = 10.0, pairedFuelLiters = 0.6),
+        trip = TripSummary(started = true, distanceKm = 10.0, pairedDistanceKm = 10.0, pairedFuelLiters = 0.6),
         daily = TripSummary(started = true, distanceKm = 20.0, fuelLiters = 1.4, pairedDistanceKm = 20.0, pairedFuelLiters = 1.4))
+
+    @Test fun `journey tile does not use session data without an active journey`() {
+        val state = live()
+        // A session aggregate must never masquerade as an active journey.
+        assertEquals("—/—/null", MediaDashboard.frame(state).journeyDetail)
+    }
+
+    @Test fun `station subtitle remains fixed even with traffic`() {
+        val frame = MediaDashboard.frame(live())
+        val radio = RadioState(RadioCatalog.stations, "oxygen")
+        val traffic = "Útinform · M3 · baleset ≈4 km"
+        assertEquals("Oxygen Music", MediaDashboard.subtitle(frame, MediaPage.ENGINE, radio, 0, traffic))
+        assertEquals("≈5,8 • Ma 7,0 l/100 km", frame.title)
+        assertEquals("Oxygen Music", MediaDashboard.subtitle(frame, MediaPage.ENGINE, radio, 0, null))
+        assertNotEquals(traffic, MediaDashboard.subtitle(frame.copy(simulated = true), MediaPage.ENGINE, radio, 0, traffic))
+    }
+
+    @Test fun `range appears in tank page but station remains in subtitle`() {
+        val frame = MediaDashboard.frame(live().copy(journal = JourneyLogState(tank = TankEstimate(fullAtMs = 1, consumedLiters = 10.0))))
+        assertTrue(frame.subtitles[3].contains("500 km"))
+        assertEquals("Oxygen Music", MediaDashboard.subtitle(frame, MediaPage.ENGINE, RadioState(RadioCatalog.stations, "oxygen"), 16_000))
+    }
 
     @Test fun `empty session never shows plausible fabricated engine values`() {
         val frame = MediaDashboard.frame(DashboardState())
@@ -120,19 +142,23 @@ class MediaDashboardTest {
         owner.destroy()
     }
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    @Test fun `compact AA artwork retains four tiles and greys stale engine data`() {
+    @Test fun `compact AA artwork retains seven tiles and greys stale engine data`() {
         val state = live()
         val bitmap = DashboardTiles.compactOverview(state)
+        val journeyBitmap = DashboardTiles.compactOverview(state.copy(simulated = true))
+        java.io.File("build/reports").mkdirs()
+        java.io.File("build/reports/aa-journey-preview.png").outputStream().use { journeyBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        assertNotEquals(MediaDashboard.frame(state), MediaDashboard.frame(state.copy(daily = state.daily.copy(distanceKm = 21.0))))
         assertEquals(512, bitmap.width)
         assertEquals(512, bitmap.height)
-        assertNotEquals(bitmap.getPixel(70, 50), bitmap.getPixel(300, 50))
+        assertNotEquals(bitmap.getPixel(70, 50), bitmap.getPixel(70, 245))
         val stale = DashboardTiles.compactOverview(state.copy(nowMs = 7_000,
             fuelDisplay = state.fuelDisplay.copy(fresh = false)))
-        assertEquals(stale.getPixel(70, 50), stale.getPixel(300, 50))
-        assertNotEquals(stale.getPixel(70, 50), stale.getPixel(300, 175)) // Stored daily aggregate remains valid.
+        assertEquals(stale.getPixel(70, 50), stale.getPixel(70, 245))
+        assertNotEquals(stale.getPixel(70, 50), stale.getPixel(300, 145)) // Stored daily aggregate remains valid.
         // The photographed AA card overlays the lower area; no artwork data may occupy it.
         val background = bitmap.getPixel(0, 511)
-        for (y in 288 until 512) for (x in 0 until 512) assertEquals(background, bitmap.getPixel(x, y))
+        for (y in 335 until 512) for (x in 0 until 512) assertEquals(background, bitmap.getPixel(x, y))
         assertNotEquals(background, bitmap.getPixel(70, 175))
         val output = java.io.File("build/reports/aa-compact-preview.png")
         output.parentFile?.mkdirs()
@@ -180,24 +206,24 @@ class MediaDashboardTest {
         assertTrue(MediaDashboard.frame(d.copy(fuelDisplay = d.fuelDisplay.copy(fresh = false))).title.contains("utolsó"))
     }
 
-    @Test fun `subtitle alternates data and station every eight seconds with no appended truncation`() {
+    @Test fun `subtitle always shows station across time and pages`() {
         val radio = RadioState(RadioCatalog.stations, "oxygen", playing = true)
         val f = MediaDashboard.frame(live())
         for (t in listOf(0L, 7_999L, 16_000L, 23_999L))
-            assertEquals(f.subtitles[0], MediaDashboard.subtitle(f, MediaPage.ENGINE, radio, t))
+            assertEquals("Oxygen Music", MediaDashboard.subtitle(f, MediaPage.ENGINE, radio, t))
         for (t in listOf(8_000L, 15_999L, 24_000L))
             assertEquals("Oxygen Music", MediaDashboard.subtitle(f, MediaPage.ENGINE, radio, t))
-        assertEquals(f.subtitles[2], MediaDashboard.subtitle(f, MediaPage.SENSORS, radio, 0))
+        assertEquals("Oxygen Music", MediaDashboard.subtitle(f, MediaPage.SENSORS, radio, 0))
         assertEquals("Oxygen Music", MediaDashboard.subtitle(f, MediaPage.SENSORS, radio, 8_000))
     }
-    @Test fun `radio subtitle distinguishes pause and buffering from playback`() {
+    @Test fun `radio subtitle stays stable during playback state changes`() {
         val f = MediaDashboard.frame(live())
         val radio = RadioState(RadioCatalog.stations, "oxygen")
-        assertTrue(MediaDashboard.subtitle(f, MediaPage.ENGINE, radio, 8_000).endsWith("szünet"))
-        assertTrue(MediaDashboard.subtitle(f, MediaPage.ENGINE, radio.copy(buffering = true), 8_000).contains("kapcsolódás"))
-        assertTrue(MediaDashboard.subtitle(f, MediaPage.ENGINE, radio.copy(error = "error"), 8_000).endsWith("hiba"))
+        assertEquals("Oxygen Music", MediaDashboard.subtitle(f, MediaPage.ENGINE, radio, 8_000))
+        assertEquals("Oxygen Music", MediaDashboard.subtitle(f, MediaPage.ENGINE, radio.copy(buffering = true), 8_000))
+        assertEquals("Oxygen Music", MediaDashboard.subtitle(f, MediaPage.ENGINE, radio.copy(error = "error"), 8_000))
     }
-    @Test fun `service allows timed subtitle publication even when OBD and radio are unchanged`() {
+    @Test fun `service keeps station subtitle stable over time`() {
         val owner = Robolectric.buildService(DashboardMediaService::class.java).create()
         val service = owner.get()
         fun subtitle(): String = org.robolectric.util.ReflectionHelpers.getField(service, "publishedSubtitle")
@@ -206,7 +232,7 @@ class MediaDashboardTest {
         try {
         org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofSeconds(8))
         publish.invoke(service, false)
-        assertEquals("Oxygen Music • szünet", subtitle())
+        assertEquals("Oxygen Music", subtitle())
         org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofSeconds(8))
         publish.invoke(service, false)
         assertEquals(initial, subtitle())

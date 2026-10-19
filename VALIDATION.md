@@ -260,3 +260,83 @@ Az `unsupportedDebug` IOT kategóriát használó fejlesztői kísérlet. A sike
 - `:auto-media:testDebugUnitTest`, `:app:lintMediaDebug`, `:app:assembleMediaDebug`: BUILD SUCCESSFUL. A meglévő katalógusteszt állomásszáma 20-ra frissült.
 - `verify_variants.py`: izoláció rendben; ebben a módosításban csak a mediaDebug APK épült újra, a többi változat korábbi buildjének manifestjét ellenőrizte.
 - Telefonos telepítés és új állomások tényleges Android/AA-lejátszási próbája még függőben: az ADB jelenleg nem lát csatlakoztatott készüléket.
+
+
+## 2026-10-19 – 0.16.0 Útinform első változat
+
+- `:traffic:test`, `:connection:testDebugUnitTest`, `:auto-media:testDebugUnitTest`: **97 teszt, 0 hiba** (19 + 39 + 39). Irány, távolság, elavult GPS/feed, időbeli érvényesség, bizonytalan hely, kijelzési idő és ismétlés; DATEX koordináták/hiányzó hely/hibás dátum/DTD/nem valós publikáció; HTTPS konfiguráció; AA alsó sor és demószeparáció.
+- `:app:assembleMediaDebug`, `:app:lintMediaDebug`: sikeres, lint 0 hiba. `assemblePhoneDebug`, `assembleUnsupportedDebug`, `assemblePhoneRelease`: sikeres. `python3 scripts/verify_variants.py`: mind a négy változat izolációja rendben. Végleges APK: 0.16.0-aa-media, versionCode 19.
+- Külön Android 35 emulátoron a fejlesztési APK Útinform oldala megnyitva és vizuálisan ellenőrizve; kikapcsolt, üres konfiguráció mentése sikeres (Keystore-tárolás). A próbához nem használtunk valódi helyet, előfizetést vagy útnaplót. Az emulátor a próba után leállítva és eltávolítva.
+- Nem igazolt: éles NAP letöltés/hitelesítés/koordináták; tényleges mozgás melletti GPS és AA háttérindítás; Carpuride 1/3 nézet, feliratvágás és metadata-értesítések. NAP-hozzáférés nem áll rendelkezésre. A fizikai telefon ADB-n nem volt elérhető; telepítés arra nem történt.
+- Nem történt GitHub push vagy kiadás. A beállítás és az első éles próba menete: `docs/TRAFFIC.md`.
+
+
+## 2026-10-19 – 0.16.1 hatótáv
+
+- `:trip:test` (58), `:auto-media:testDebugUnitTest` (40): 98 sikeres teszt. Új esetek: tank/átlag hiánya, nulla fogyasztás, üres tank, párosított adatok, súlyozott történeti átlag, mai átlag elsőbbsége, bizonytalanság, AA Tank oldal és harmadik váltakozó sor.
+- `:app:assembleMediaDebug`, `:app:lintMediaDebug`: sikeres. Változatizoláció ellenőrzése sikeres; a másik három APK-t ehhez a tiszta számítási/kijelzési módosításhoz nem építettük újra.
+- Samsung telefonra `adb install -r`: Success; visszaolvasott verzió 0.16.1-aa-media / 20. Műszerfal megnyitva, a tankkártyán a becsült hatótáv, az átlag forrása és a bizonytalansági jelzés képernyőképen ellenőrizve. A személyes képernyőkép nem került a repóba.
+- A Carpuride-on az új harmadik médiasor olvashatósága külön visszaigazolást igényel.
+
+## 2026-10-19 – 0.16.2 AA-borító
+
+- Média egységtesztek, mediaDebug build és lint sikeres. A natív Canvas tesztből generált kilencmezős borító vizuálisan ellenőrizve; az alsó takart terület továbbra is üres, a feliratok nem fedik egymást.
+- Samsung telefonra adatmegőrző APK-frissítés sikeres; telepített verzió 0.16.2-aa-media / 21.
+- A valódi Carpuride kis kártyájának olvashatóságát ez a generált előnézet nem bizonyítja; helyszíni visszaigazolás szükséges.
+
+## 2026-10-19 – 0.16.3 magasabb borító
+
+- Kilencmezős adatblokk +15,5% magasság, kissé nagyobb betűk. Natív előnézet vizuálisan ellenőrizve; alsó üres terület teszthatára az új geometriához igazítva. Média tesztek, mediaDebug build és lint sikeres.
+- Adatmegőrző telepítés a Samsung telefonra sikeres; visszaellenőrzött verzió 0.16.3-aa-media / 22. A méret módosítása a felhasználó valós AA-visszajelzésén alapul; az új méret hoston való takarásmentessége még visszaigazolandó.
+
+## 2026-10-19 – 0.16.4 hatmezős borító
+
+Média tesztek, mediaDebug build és lint sikeres. Natív Canvas előnézet vizuálisan ellenőrizve: két oszlop, három sor, nagyobb számok; sebesség/feszültség/tank% nincs a borítón. A váltakozó hatótávsor sem tartalmaz tank%-ot. Adatmegőrző telepítés sikeres; visszaellenőrzött telefonos verzió 0.16.4-aa-media / 23. A tényleges fejegységes olvashatóság visszaigazolása hátravan.
+
+## 2026-10-19 – 0.16.5 csempesorrend
+
+RPM mellé került a terhelés, vízhőfok alul a hatótáv mellett. Média tesztek, mediaDebug build/lint sikeres; natív előnézet vizuálisan ellenőrizve. Adatmegőrző telefonos telepítés sikeres, visszaolvasott verzió 0.16.5-aa-media / 24.
+
+## 2026-10-19 – 0.16.6 hatótáv színei
+
+Trip és média tesztek, mediaDebug build/lint sikeres. Új teszt: ismeretlen, 0, 99,99, 100, 149,99 és 150 km; a bizonytalanság nem változtat a színkategórián. Adatmegőrző telefonos frissítés sikeres, visszaolvasott verzió 0.16.6-aa-media / 25.
+
+## 2026-10-19 – 0.16.7 zöld hatótáv
+
+Trip/média tesztek, mediaDebug build és lint sikeres. A 250 és 250,01 km határeset külön tesztelve. Adatmegőrző telepítés sikeres; visszaellenőrzött telefonos verzió 0.16.7-aa-media / 26.
+
+## 2026-10-19 – 0.16.8 szívólevegő-csempe
+
+Média tesztek, mediaDebug build és lint sikeres. Natív Canvas előnézet vizuálisan ellenőrizve: alsó sor víz / szívólevegő / hatótáv, felső két sor változatlan. Teszt ellenőrzi az IAT elavulásának szürkülését és az IAT-változás médiafrissítési kulcsát. Változatszétválasztás ellenőrzése sikeres (a többi variáns meglévő buildjével). Adatmegőrző telefonos telepítés sikeres, visszaolvasott verzió 0.16.8-aa-media / 27. Valódi AA-kártyán az új elrendezés olvashatósága még visszaigazolandó.
+
+## 2026-10-19 – 0.16.9 útösszesítő csempe
+
+Média tesztek, mediaDebug build/lint sikeres. Váltás 7999/8000/16000 ms határa tesztelve; aktív út nélkül nincs munkamenetből átvett adat. Natív előnézet vizuálisan ellenőrizve. Variánsszétválasztás rendben (egyéb variánsok meglévő buildjeivel). Adatmegőrző telefonos frissítés sikeres, visszaolvasott verzió 0.16.9-aa-media / 28. Valódi AA-váltás és fejegységes olvashatóság még visszaigazolandó.
+
+## 2026-10-19 – 0.16.10–0.16.11: háromoszlopos sor, térkép, világosítás
+
+Második sor állandó 10 s / napi / út fogyasztás, úttávolság az útátlag alatt. Telefonos HTML automatikus OSM-betöltés, export kézi: generált HTML-kapcsolók tesztelve. Connection és média tesztek, mediaDebug build/lint sikeres. Nyolccsempés világosított natív előnézet vizuálisan ellenőrizve, üres alsó terület megőrizve. Variánsszétválasztás sikeres (többi variáns meglévő buildje). A valódi fejegység fényereje és a telefonos térképcsempék hálózati betöltése még nincs vizuálisan visszaigazolva.
+
+## 2026-10-19 – 0.16.12: +4% magasság
+
+A natív előnézet vizuálisan ellenőrizve. A képpontteszt mintavételi koordinátái az új geometriához igazítva; média tesztek, mediaDebug build és lint sikeres. Üres alsó háttér y=335-től tesztelve. Variánsszétválasztás sikeres a meglévő többi variánssal. Adatmegőrző telepítés sikeres; a valódi AA-kártya további takarását a generált előnézet nem igazolja.
+
+## 2026-10-19 – 0.16.13: napi km az IAT helyén
+
+Média tesztek, mediaDebug build/lint és variánsszétválasztás sikeres (egyéb variánsok meglévő buildjeivel). Napi távolság változásának médiafrissítése és megőrzése elavult szenzorok mellett tesztelve. Natív előnézet vizuálisan ellenőrizve: MA KM alul középen, útátlag második sor jobb szélén külön km nélkül. Telefonos adatmegőrző telepítés és verzióellenőrzés sikeres: 0.16.13-aa-media / 32. Valódi AA elrendezés visszaigazolása még hátravan.
+
+## 2026-10-19 – 0.16.14: teljes útcsempe áthelyezése
+
+Média tesztek, mediaDebug build/lint sikeres; natív előnézet ellenőrizve: két mező a második sorban, útátlag + útkm alul középen. Variánsszétválasztás sikeres meglévő egyéb variánsokkal. Adatmegőrző telefonos frissítés sikeres, 0.16.14-aa-media / 33. Fejegységes visszaigazolás még nincs.
+
+## 2026-10-19 – 0.16.15: aktuális útkilométer
+
+Média tesztek, mediaDebug build/lint sikeres. Natív előnézet ellenőrizve: alul középen ÚT KM, egyetlen nagy távolságérték, útátlag nélkül. Változatszétválasztás meglévő egyéb buildjeivel sikeres. Adatmegőrző telefonos frissítés sikeres, visszaellenőrzött 0.16.15-aa-media / 34. A tényleges AA-kártya visszaigazolása hátravan.
+
+## 2026-10-19 – 0.16.16–0.16.17: kétperces motorleállás és fix rádiósor
+
+Trip, connection és média tesztek, mediaDebug build/lint sikeres. A megfigyelt nulla RPM 120 másodperces határa és az ennél rövidebb leállás utáni folytatás tesztelve; a külön ECU-runtime-visszaesés változatlan szabály. A rádiónév időtől, oldaltól, lejátszási állapottól és Útinformtól függetlenül állandó; szolgáltatás szintű időléptetéses teszt is sikeres. Változatszétválasztás sikeres meglévő többi builddel. Adatmegőrző telefonos telepítés sikeres, verzió 0.16.17-aa-media / 36. Valódi kétperces motorleállást és fejegységes megjelenést nem teszteltünk.
+
+## 2026-10-19 – 0.16.17 commit előtti teljes ellenőrzés
+
+A GitHub workflow teljes Gradle parancsa helyben sikeres: elm/obd/trip/traffic, connection/auto/auto-media tesztek; phone/unsupported/media debug lint; mindhárom debug és phone release build. A változatszétválasztás frissen épített variánsokon sikeres. Buildtermék, telefonos mentés, képernyőkép és hitelesítő adat nem része a commitnak. A GitHub Actions futása ettől külön ellenőrzendő.
