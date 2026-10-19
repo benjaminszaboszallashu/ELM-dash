@@ -1,6 +1,13 @@
 # ELM Dash — projektátadás és termékkövetelmények
 
-Állapot: **2026-10-09 · 0.15.1**. Ez a fájl a beszélgetés nélkül is használható fejlesztői összefoglaló. A régebbi tesztek bizonyítékai a [VALIDATION.md](../VALIDATION.md)-ben, a buildparancsok a [README.md](../README.md)-ben vannak.
+Állapot: **2026-10-19 · 0.16.17**. Ez a fájl a beszélgetés nélkül is használható fejlesztői összefoglaló. A régebbi tesztek bizonyítékai a [VALIDATION.md](../VALIDATION.md)-ben, a buildparancsok a [README.md](../README.md)-ben vannak.
+
+## Aktuális felület (0.16.17)
+
+- AA borító: RPM / terhelés; 10 s fogyasztás / napi fogyasztás; vízhőfok / aktuális út km / hatótáv. A korábbi elrendezések alább történeti bejegyzések.
+- Világosított csempék, 4%-kal magasabb adatblokk. Az alsó szövegsor állandó rádiónév; nincs műszer/rádió/hatótáv/Útinform váltogatás.
+- Telefonos útrészletekben az OSM automatikusan betöltődik; exportált HTML-ben kézzel indítható.
+- Folyamatos 0 RPM: 120 s; friss RPM hiánya: 180 s útlezárási határ.
 
 ## 1. Cél és használat
 
@@ -71,7 +78,7 @@ Részletes váltásjelzés: [DRIVING_GUIDANCE.md](../DRIVING_GUIDANCE.md). A for
 |---|---|
 | Napi összesítés | Helyi naptári nap, éjféli forduló; nem motorindítás. 31 megfigyelt nap mentve. |
 | Naplózott út indulása | Első friss RPM > 0. A csatlakozás előtti utat nem rekonstruáljuk. |
-| Igazolt motorleállítás | 8 s folyamatosan megfigyelt 0 RPM lezárja. |
+| Igazolt motorleállítás | 120 s folyamatosan megfigyelt 0 RPM lezárja. |
 | Motoradat / kapcsolat elvesztése | 180 s a legutóbbi friss RPM óta. Rövidebb kimaradás ugyanazt az utat folytatja, részleges jelzéssel. |
 | Új motorindítás | ECU-futásidő visszaesése külön utat indíthat; 16 bites túlcsordulást nem kezelünk restartként. |
 | Kézi leállítás / nullázás | Azonnali lezárás; nullázás megőrzi a napi adatot és a naplót, nem küld út végi értesítést. |
@@ -181,3 +188,77 @@ Felhasználói kérés: teljes képernyős útrészletek interaktív OSM-térké
 ## 0.15.1 – keresztény rádiók
 
 Hat új alapállomás: Mária Rádió, Magyar Katolikus Rádió, UCB 1/2 (angol), ERF Plus/Jess (német). A telefon és az Android Auto közös katalógusát bővítik; a mentett kiválasztás, kedvencek és saját állomások megmaradnak. Hivatalos források és streampróba: [RADIO_STATIONS.md](../RADIO_STATIONS.md).
+
+## 0.16.0 – Útinform első változat (2026-10-19)
+
+Új `traffic` Kotlin modul, külön location FGS, titkosított NAP HTTP Pull URL és fogaskerék → Útinform oldal. AA-kapcsolatra indul, az OBD/útvonalnapló nélkül is működik. Koordinátás DATEX II 2.x teljes pillanatképek, hely- és irányszűrés, 20 másodperces deduplikált alsó médiasor. Nincs útillesztés vagy navigációs útvonal; TMC/OpenLR kimarad. Éles NAP-előfizetés és Carpuride-próba hátravan. Beállítás és részletes korlátok: [TRAFFIC.md](TRAFFIC.md). A korábbi kutatási dokumentum történeti javaslat, nem a végleges implementáció specifikációja.
+
+## 0.16.1 – becsült hátralévő hatótáv
+
+Képlet: tankban becsült liter × 100 / átlagos l/100 km. Legalább 1 km párosított fogyasztás/távolság után a mai átlag az alap; addig a legutóbbi 30 lezárt út párosított liter/távolság összegének aránya (legalább 1 km). Nem az utak átlagainak számtani átlaga, és nem a 10 s fogyasztás. Hiányzó tank/pozitív átlag esetén nincs szám. Adathiány bizonytalansági jelzéssel; mindig becslés. 10 km-re lefelé kerekített kijelzés, 0–10 km között <10. Telefon: Műszerfal és Napló tankkártya. AA: Tank adatlap, valamint a harmadik 8 s-os alsó sor (motor → rádió → hatótáv); Útinform prioritása megmarad. Demó nem használ valódi úttörténetet hatótávhoz. A számítás nem ír át tankot/naplót.
+
+## 0.16.2 – sűrített AA-borító
+
+A compactOverview 3×3 rácsban kilenc adatot mutat: RPM/váltási jel, vízhőfok, sebesség; 10 s és napi fogyasztás, terhelés; hatótáv, tank%, feszültség. A teljes blokk továbbra is x=64..448, y=44..277, alul nincs adat az AA vezérlői miatt. Hiányzó adat szürke, tank/hatótáv adathiány borostyánsárga és kérdőjel. Hosszabb számok szélességre illeszkednek. A host mérete és sötétítése továbbra sem vezérelhető.
+
+## 0.16.3 – magasabb AA-adatblokk
+
+Valódi fejegységes felhasználói visszajelzés alapján a kilencmezős blokk magassága 233-ról 269 pixelre nőtt (+15,5%), változatlan felső éllel és szélességgel. Új tartomány: x=64..448, y=44..313; y=324-től üres háttér. A betűk is kissé nagyobbak. Ez felülírja a korábbi 277 pixeles alsó határt.
+
+## 0.16.4 – hatmezős AA-borító
+
+Felhasználói pontosítás: a borítóról lekerült a sebesség, feszültség és tank%. Az új 2×3 rács: RPM/vízhőfok, 10 s/napi fogyasztás, motorterhelés/hatótáv. Magasság változatlan (44..313), szélesebb cellák és nagyobb számok. A váltakozó hatótávsorból is kikerült a tank%. Telefonos diagnosztikai adatok megmaradnak.
+
+## 0.16.5 – RPM mellett terhelés
+
+Felhasználói sorrend: első sor RPM / terhelés, második sor 10 s / napi fogyasztás, harmadik sor vízhőfok / hatótáv. Méretek változatlanok.
+
+## 0.16.6 – hatótáv színküszöbök
+
+Felhasználói kérésre az AA hatótávcsempe színe a nyers becsült hatótáv szerint változik: <100 km piros; 100..150 km (150 kizárva) narancs; >=150 km alap kékesszürke; hiányzó adat szürke. A bizonytalanság továbbra is kérdőjel, de önmagában már nem színez narancsra. Pontosan 100 km narancs, pontosan 150 km alap szín.
+
+## 0.16.9 – zöld hatótáv
+
+Felhasználói pontosítás: a nyers becsült hatótáv >250 km esetén zöld. Pontosan 250 km még kékesszürke. További határok változatlanok: 150..250 alap; 100..<150 narancs; <100 piros; ismeretlen szürke.
+
+## 0.16.8 – Szívólevegő az AA borítón
+
+Az alsó sor három mező: vízhőfok, szívólevegő (IAT), hatótáv. A felső két sor változatlan. IAT frissen semleges, elavulva utolsó érték szürkén; nem külső hőmérséklet. A média frissítési kulcsa az IAT változását is követi.
+
+## 0.16.9 – Váltakozó napi / út csempe
+
+A napi fogyasztás csempéje 8 másodpercenként vált az aktuális út távolságára és átlagfogyasztására. Élő módban kizárólag a journal.active összesítését használja, nem a kapcsolati munkamenetet; lezárt vagy hiányzó út esetén nincs kitalált érték. A váltás a médiaszolgáltatás monoton órájáról működik friss OBD-minta nélkül is.
+
+## 0.16.10 – Állandó háromoszlopos fogyasztássor
+
+Felhasználói pontosítás: nincs napi/út váltogatás. A második sor három állandó csempe: 10 s fogyasztás, napi átlag, aktuális útátlag (alatta megtett km). A többi sor változatlan.
+
+A telefonos útrészletek megnyitása automatikusan betölti az OSM alaptérképet, ha van GPS-pont. Az exportált HTML továbbra is kézi betöltést használ. Hálózati hibánál a vonal és az összesítés elérhető marad.
+
+## 0.16.11 – Világosabb AA csempék
+
+A kompakt borító csempéinek RGB-csatornái 18%-kal a fehér felé tolódnak az AA sötétítő rétegének ellensúlyozására. A színkategóriák, küszöbök és az üres háttér változatlanok.
+
+## 0.16.12 – Adatblokk +4% magasság
+
+A kompakt AA-adatblokk 4%-os függőleges skálázása y=44 rögzített felső éllel; alsó él körülbelül y=324. A feliratok és számok a csempével együtt nőnek. y=335 alatt továbbra is üres háttér.
+
+## 0.16.13 – Napi távolság az alsó középső csempén
+
+A felhasználó levetette a szívólevegőt az AA borítóról; helyén MA KM, a helyi naptári nap összes távolsága. Az útátlag alól kikerült az aktuális út távolsága. A telefonos IAT és fogyasztásbecslés változatlan. A napi távolság változása frissíti a média borítót.
+
+## 0.16.14 – Elrendezési félreértés javítása
+
+A felhasználó a teljes útátlag + útkilométer csempét kérte alul középre, nem külön napi km-t. Végleges sorrend: RPM / terhelés; 10 s fogyasztás / napi fogyasztás; vízhőfok / útátlag alatta útkm / hatótáv. Napi km és IAT nincs a borítón.
+
+## 0.16.15 – ÚT KM önálló nagy érték
+
+Alul középen kizárólag az aktuális út megtett távolsága, nagy számmal, ÚT KM címkével. Az útátlag és a kisebb másodlagos szám kikerült. Élő módban journal.active.summary.distanceKm, hiányzó aktív útnál szürke vonal; nem napi vagy kapcsolati munkamenet-távolság.
+
+## 0.16.16 – Motorleállási várakozás két perc
+
+A megfigyelt 0 RPM lezárási küszöbe 8 helyett 120 másodperc. A futásidő nélküli RPM-alapú újraindításdetektálás ugyanezt követi. Kapcsolatvesztés továbbra is 180 másodperc; a külön ECU-futásidő-visszaesés és kézi leállítás szabálya változatlan.
+
+## 0.16.17 – Állandó rádiónév az alsó sorban
+
+A felhasználó kérésére a média lejátszó alsó szövegsora kizárólag a kiválasztott rádió neve. Nem vált motoradatra, hatótávra vagy Útinformra. A lejátszási állapot továbbra is a vezérlők/PlaybackState feladata. Az Útinform-adatgyűjtés beállítása változatlan, de ezen a soron nincs eseménymegjelenítés.

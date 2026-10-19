@@ -149,7 +149,7 @@ class JourneyLog(initial: JourneyLogState = JourneyLogState(), private val id: (
         previous = point
         if (rpm == 0.0) {
             if (stoppedAt == null) stoppedAt = now
-            if (now - stoppedAt!! >= 8_000) finish(JourneyEnd.ENGINE_OFF, wallMs)
+            if (now - stoppedAt!! >= 120_000) finish(JourneyEnd.ENGINE_OFF, wallMs)
         } else stoppedAt = null
     }
 

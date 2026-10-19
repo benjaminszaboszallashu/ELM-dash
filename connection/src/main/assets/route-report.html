@@ -17,4 +17,5 @@ function fit(){if(points.length===1)map.setView(points[0],15);else if(points.len
 const notice=document.getElementById('notice');notice.textContent=points.length?points.length+' GPS-pont · nagyíts vagy húzd a térképet.':'Ehhez az úthoz nincs helyben elérhető GPS-adat. A korábbi útvonal nem rekonstruálható.';
 const tiles=document.getElementById('tiles');tiles.disabled=!points.length;
 tiles.onclick=()=>{if(layer){map.removeLayer(layer);layer=null;tiles.textContent='OSM alaptérkép betöltése';return}if(!/^https?:$/.test(location.protocol)){notice.textContent='A helyi fájl útvonala internet nélkül is nagyítható. Az OSM alaptérképhez nyisd meg ezt a HTML-t HTTPS-en kiszolgáló WebDAV/weboldalon vagy az alkalmazásban.';return}layer=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);layer.on('tileerror',()=>{notice.textContent='Az alaptérkép nem érhető el; az útvonal és az összesítés továbbra is látható.'});tiles.textContent='Alaptérkép elrejtése'};
+if (/*AUTO_LOAD_MAP*/false && points.length) tiles.click();
 </script></body></html>
