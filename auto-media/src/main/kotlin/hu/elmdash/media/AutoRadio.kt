@@ -10,6 +10,7 @@ internal object AutoRadio {
     val connected: Boolean get() = session?.connected == true
     fun connectionChanged(context: Context, connected: Boolean) {
         val app = context.applicationContext
+        hu.elmdash.connection.TrafficRuntime.connectionChanged(app, connected)
         val radio = RadioGraph.get(app)
         if (session == null) session = AaRadioSession(
             CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),

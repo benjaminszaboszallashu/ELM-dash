@@ -9,6 +9,7 @@ android {
 kotlin { jvmToolchain(17) }
 dependencies {
     api(project(":trip"))
+    api(project(":traffic"))
     api(libs.coroutines.android)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")

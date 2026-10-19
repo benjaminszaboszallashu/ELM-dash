@@ -1,6 +1,6 @@
 # Fejlesztő agentek belépési pontja
 
-Ez az ELM Dash Android-projekt. A felhasználó elsődleges célpontja **Android Auto**, a telefon kísérőfelület. Az aktuális átadás dátuma 2026-10-09, appverzió 0.15.1.
+Ez az ELM Dash Android-projekt. A felhasználó elsődleges célpontja **Android Auto**, a telefon kísérőfelület. Az aktuális átadás dátuma 2026-10-19, appverzió 0.16.17.
 
 ## Kezdés
 
@@ -16,7 +16,7 @@ Ez az ELM Dash Android-projekt. A felhasználó elsődleges célpontja **Android
 - Hiányzó/elavult adat nem nulla. Utolsó szám maradjon szürkén, ne villogjon vagy ugráljon a layout.
 - Fogyasztás kijelzése l/100 km, a pillanatnyi helyén 10 s gördülő liter/távolság arány. 5 km/h alatt „—”; ne válts l/h kijelzésre. Nyers fogyasztást integrálj naphoz, úthoz és tankhoz, ne a kijelzési átlagot.
 - Nap = helyi naptári nap, éjféli forduló. Út ettől független. Demó soha ne írja felül a valódi napot, tankot vagy útnaplót.
-- Friss RPM hiányában 180 s az út türelmi ideje; folyamatos 0 RPM esetén 8 s. A szolgáltatás-élettartam ne előzze meg a késleltetett lezárást.
+- Friss RPM hiányában 180 s az út türelmi ideje; folyamatos 0 RPM esetén 120 s. A szolgáltatás-élettartam ne előzze meg a késleltetett lezárást.
 - Automatikus OBD/radio indulásnál a felhasználó kézi leállítása/szüneteltetése elsőbbséget kap.
 - Telefonos alsó menü: Műszerfal, Napló, Rádió. Kapcsolat a jobb felső fogaskeréken. Napi adatok és útnapló egy oldalon.
 - Az AA dashboard médiafelületen kísérleti integráció. Ne ígérj hivatalos támogatást, garantált 1/3-os elrendezést vagy Play-elfogadást.
@@ -45,4 +45,8 @@ Lásd [ROUTE_RECORDING.md](docs/ROUTE_RECORDING.md). Csak opt-in valódi utak r�
 
 ## Úttérkép 0.15
 
-A Napló útrészletei teljes képernyős ablakban, helyben generált HTML/Leaflet nézetben nyílnak. A WebDAV sikerjelölő csak a JSONL és HTML együttes sikerénél írható. A térképcsempék opt-in hálózati megjelenítésűek; hiányzó útvonalat ne rekonstruálj. A fájlban ne legyen célhely/jelszó vagy nyers, HTML-be illesztett szöveg.
+A Napló útrészletei teljes képernyős ablakban, helyben generált HTML/Leaflet nézetben nyílnak. A WebDAV sikerjelölő csak a JSONL és HTML együttes sikerénél írható. A telefonos útrészletekben a térképcsempék automatikusan töltődnek (felhasználói kérés, 0.16.17); az exportált HTML-ben továbbra is gombbal indulnak; hiányzó útvonalat ne rekonstruálj. A fájlban ne legyen célhely/jelszó vagy nyers, HTML-be illesztett szöveg.
+
+## Útinform 0.16
+
+Lásd [TRAFFIC.md](docs/TRAFFIC.md). Külön opt-in helyfigyelés, titkosított NAP URL, GPS csak memóriában. Nem ismeri a Waze útvonalát, nincs útillesztés; TMC/OpenLR eseményt nem szabad kitalált koordinátával megjeleníteni. A médiafelület és az éles NAP még autós/adatforrás-próbát igényel. A `:traffic:test` is része a CI-nek.

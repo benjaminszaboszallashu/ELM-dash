@@ -31,6 +31,7 @@ data class DashboardState(
     val adapterName: String = "ELM327", val simulated: Boolean = false, val lastTrip: TripSummary? = null
 ) {
     val active: Boolean get() = phase !in listOf(Phase.STOPPED, Phase.ERROR)
+    val range: RangeEstimate get() = RangeEstimate.calculate(journal.tank, daily, if (simulated || phase == Phase.DEMO) emptyList() else journal.journeys)
     val carUnavailable: Boolean get() = !simulated && phase != Phase.DEMO && phase != Phase.LIVE
 }
 

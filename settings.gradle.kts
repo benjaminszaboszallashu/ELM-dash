@@ -5,3 +5,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "ElmDashboard"
 include(":app", ":elm", ":obd", ":trip", ":connection", ":dashboard", ":auto", ":dashboard-graphics", ":auto-media")
+
+include(":traffic")

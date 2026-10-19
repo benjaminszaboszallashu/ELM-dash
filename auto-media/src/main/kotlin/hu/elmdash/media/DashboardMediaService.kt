@@ -249,7 +249,8 @@ class DashboardMediaService : MediaBrowserService() {
         val s = controller.state.value
         val frame = MediaDashboard.frame(s)
         val rs = radio.state.value
-        val subtitle = MediaDashboard.subtitle(frame, page, rs, android.os.SystemClock.elapsedRealtime() - subtitleStartedAt)
+        val subtitle = MediaDashboard.subtitle(frame, page, rs, android.os.SystemClock.elapsedRealtime() - subtitleStartedAt,
+            hu.elmdash.connection.TrafficRuntime.line)
         if (!force && frame == published && rs == publishedRadio && subtitle == publishedSubtitle) return
         if (artwork == null || frame != published) artwork = DashboardTiles.compactOverview(s)
         mediaSession.setMetadata(MediaMetadata.Builder()

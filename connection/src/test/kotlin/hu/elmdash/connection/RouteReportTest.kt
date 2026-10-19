@@ -43,5 +43,8 @@ class RouteReportTest {
         assertFalse(html.contains("</script><script>alert('injection')"))
         assertTrue(html.contains("\\u003c"))
         assertTrue(html.contains("textContent"))
+        assertTrue(html.contains("if (false && points.length) tiles.click();"))
+        val appHtml = RouteReport.html(RuntimeEnvironment.getApplication(), data, autoLoadMap = true)
+        assertTrue(appHtml.contains("if (true && points.length) tiles.click();"))
     }
 }
