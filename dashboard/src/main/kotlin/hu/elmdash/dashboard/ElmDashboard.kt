@@ -73,7 +73,7 @@ fun ElmDashboard(controller: DashboardController, autoSurface: String, radioCont
                 Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("ELM / DASH", fontWeight = FontWeight.Black, fontSize = 23.sp, letterSpacing = 2.sp)
-                        Text(when (autoSurface) { "media" -> "ANDROID AUTO MÉDIA  ·  0.17.4"; "unsupported" -> "ANDROID AUTO LAB  ·  0.17.4"; else -> "DIRECT BLUETOOTH OBD  ·  0.17.4" }, color = Muted, fontSize = 10.sp, letterSpacing = 1.5.sp)
+                        Text(when (autoSurface) { "media" -> "ANDROID AUTO MÉDIA  ·  0.19.0"; "unsupported" -> "ANDROID AUTO LAB  ·  0.19.0"; else -> "DIRECT BLUETOOTH OBD  ·  0.19.0" }, color = Muted, fontSize = 10.sp, letterSpacing = 1.5.sp)
                     }
                     if (settingsOpen) IconButton(onClick = { if (trafficSettingsOpen) trafficSettingsOpen = false else if (routeSettingsOpen) routeSettingsOpen = false else if (fuelSettingsOpen) fuelSettingsOpen = false else settingsOpen = false },
                         modifier = Modifier.semantics { contentDescription = "Vissza" }) { Text("←", fontSize = 26.sp) }
@@ -98,7 +98,7 @@ fun ElmDashboard(controller: DashboardController, autoSurface: String, radioCont
                 } else when (tab) {
                     0 -> TelemetryScreen(state, parkingPreview = parkingPreview, onJournal = { tab = 1 }, onConnect = { settingsOpen = true; fuelSettingsOpen = false; routeSettingsOpen = false })
                     1 -> JournalScreen(controller, state)
-                    2 -> MaintenanceScreen()
+                    2 -> MaintenanceScreen(state.journal.journeys)
                     3 -> radioContent?.invoke()
                 }
             }

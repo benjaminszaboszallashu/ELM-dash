@@ -24,9 +24,15 @@ enum class Pid(val code: Int, val size: Int, val unit: String, val intervalMs: L
 
 enum class Quality { OK, UNSUPPORTED, NO_DATA, ERROR }
 data class Reading(val value: Double?, val atMs: Long, val quality: Quality, val source: String = "ECU",
-    val lastKnownValue: Double? = value) {
-    fun fresh(nowMs: Long, maxAgeMs: Long = 5_000): Double? =
+    val lastKnownValue: Double? = value,
+    val lastKnownAtMs: Long? = if (value != null && quality == Quality.OK) atMs else null) {
+    fun measuredFresh(nowMs: Long, maxAgeMs: Long = 5_000): Double? =
         value?.takeIf { quality == Quality.OK && nowMs - atMs in 0..maxAgeMs }
+    fun fresh(nowMs: Long, maxAgeMs: Long = 10_000): Double? {
+        if (quality == Quality.UNSUPPORTED) return null
+        val timestamp = if (quality == Quality.OK && value != null) atMs else lastKnownAtMs ?: return null
+        return (if (quality == Quality.OK) value else lastKnownValue)?.takeIf { nowMs - timestamp in 0..maxAgeMs }
+    }
 }
 
 data class Telemetry(val readings: Map<Pid, Reading> = emptyMap(), val ecu: String? = null) {
@@ -35,6 +41,7 @@ data class Telemetry(val readings: Map<Pid, Reading> = emptyMap(), val ecu: Stri
         if (reading.quality == Quality.UNSUPPORTED) reading else Reading(null, nowMs, Quality.NO_DATA, reading.source, reading.lastKnownValue)
     })
     fun withLastKnown(previous: Telemetry) = copy(readings = readings.mapValues { (pid, reading) ->
-        reading.copy(lastKnownValue = reading.value ?: reading.lastKnownValue ?: previous.readings[pid]?.lastKnownValue)
+        reading.copy(lastKnownValue = reading.value ?: reading.lastKnownValue ?: previous.readings[pid]?.lastKnownValue,
+            lastKnownAtMs = reading.lastKnownAtMs ?: previous.readings[pid]?.lastKnownAtMs)
     })
 }

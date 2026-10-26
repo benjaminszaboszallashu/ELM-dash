@@ -44,6 +44,7 @@ class JourneyStore(context: Context) {
             .put("stats", JSONObject().put("speedSeconds", s.speedSeconds).put("moving", s.movingSeconds)
                 .put("idle", s.idleSeconds).put("idleFuel", s.idleFuelLiters).put("maxSpeed", s.maxSpeed)
                 .put("maxRpm", s.maxRpm).put("minCoolant", s.minCoolant).put("maxCoolant", s.maxCoolant)
+                .put("minVoltage", s.minVoltage).put("maxVoltage", s.maxVoltage).put("minIat", s.minIat).put("maxIat", s.maxIat)
                 .put("loadIntegral", s.loadIntegral).put("loadSeconds", s.loadSeconds))
     }
     private fun record(j: JSONObject): JourneyRecord {
@@ -55,7 +56,8 @@ class JourneyStore(context: Context) {
                 t.getBoolean("fromStart"), t.getBoolean("estimate")),
             JourneyStats(s.getDouble("speedSeconds"), s.getDouble("moving"), s.getDouble("idle"), s.getDouble("idleFuel"),
                 s.doubleOrNull("maxSpeed"), s.doubleOrNull("maxRpm"), s.doubleOrNull("minCoolant"), s.doubleOrNull("maxCoolant"),
-                s.getDouble("loadIntegral"), s.getDouble("loadSeconds")),
+                s.getDouble("loadIntegral"), s.getDouble("loadSeconds"),
+                s.doubleOrNull("minVoltage"), s.doubleOrNull("maxVoltage"), s.doubleOrNull("minIat"), s.doubleOrNull("maxIat")),
             j.getJSONArray("sources").let { a -> (0 until a.length()).map { FuelSource.valueOf(a.getString(it)) }.toSet() }, j.getString("profile"),
             j.optJSONObject("petrolPrice")?.let { price -> runCatching { PetrolPrice(price.getDouble("huf"), price.getLong("at"), price.getBoolean("cached"), price.optString("source", PetrolPrice.SOURCE_URL), price.optBoolean("afterStart", false)) }.getOrNull() })
     }

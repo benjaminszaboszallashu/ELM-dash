@@ -35,7 +35,8 @@ class JourneyStoreTest {
     @Test fun `one snapshot round trips active draft tank refills nullable stats and history`() {
         val store = JourneyStore(RuntimeEnvironment.getApplication())
         val record = JourneyRecord("one", 1000, 2000, summary = TripSummary(started = true, distanceKm = 1.0, containsEstimate = true),
-            sources = setOf(FuelSource.MAP_ESTIMATE), profile = "Kalos")
+            sources = setOf(FuelSource.MAP_ESTIMATE), profile = "Kalos",
+            stats = JourneyStats(minVoltage=12.1, maxVoltage=14.5, minIat=18.0, maxIat=51.0))
         val state = JourneyLogState(TankEstimate(fullAtMs = 1000, consumedLiters = 1.2), listOf(record.copy(id = "ended", endedAtMs = 2000, end = JourneyEnd.STOPPED)),
             listOf(FullRefill("full", 1000, 24.5)), record)
         store.save(state)
@@ -43,6 +44,18 @@ class JourneyStoreTest {
         val restored = JourneyLog(store.load())
         store.save(restored.state)
         assertEquals(2, JourneyLog(store.load()).state.journeys.size)
+    }
+    @Test fun oldStatsWithoutNewKeysRemainUnknown() {
+        val context=RuntimeEnvironment.getApplication()
+        val store=JourneyStore(context)
+        store.save(JourneyLogState(journeys=listOf(JourneyRecord("old",1000,2000,2000))))
+        val prefs=context.getSharedPreferences("elm-journal",0)
+        val json=org.json.JSONObject(prefs.getString("v1",null)!!)
+        val stats=json.getJSONArray("journeys").getJSONObject(0).getJSONObject("stats")
+        listOf("minVoltage","maxVoltage","minIat","maxIat").forEach { stats.remove(it) }
+        prefs.edit().putString("v1",json.toString()).commit()
+        assertNull(store.load().journeys.single().stats.minVoltage)
+        assertNull(store.load().journeys.single().stats.maxIat)
     }
     @Test fun `demo never writes a journey or consumes the real tank`() = runTest {
         val context = RuntimeEnvironment.getApplication()

@@ -45,7 +45,7 @@ object RouteReport {
             flush()
         }
         val summary = JSONObject()
-        for (key in listOf("distanceKm", "fuelLiters", "averageLitersPer100Km", "estimatedCostHuf", "durationSeconds", "averageSpeed", "maxSpeed", "maxRpm", "minCoolant", "maxCoolant", "averageLoad", "coveragePercent", "movingSeconds", "idleSeconds", "idleFuelLiters", "pairedFuelLiters", "pairedDistanceKm"))
+        for (key in listOf("distanceKm", "fuelLiters", "averageLitersPer100Km", "estimatedCostHuf", "durationSeconds", "averageSpeed", "maxSpeed", "maxRpm", "minCoolant", "maxCoolant", "minVoltage", "maxVoltage", "minIat", "maxIat", "averageLoad", "coveragePercent", "movingSeconds", "idleSeconds", "idleFuelLiters", "pairedFuelLiters", "pairedDistanceKm"))
             summary.put(key, end.optDouble(key, Double.NaN).takeIf { it.isFinite() } ?: JSONObject.NULL)
         for (key in listOf("reasonLabel", "sources", "profile")) summary.put(key, end.optString(key, ""))
         summary.put("startedUtc", header.optString("startedUtc", ""))
@@ -71,6 +71,8 @@ object RouteReport {
             .put("partial", record.summary.hasGaps || record.summary.containsEstimate)
             .put("durationSeconds", record.durationSeconds).put("averageSpeed", record.averageSpeed ?: JSONObject.NULL)
             .put("maxSpeed", record.stats.maxSpeed ?: JSONObject.NULL).put("maxRpm", record.stats.maxRpm ?: JSONObject.NULL)
+            .put("minVoltage", record.stats.minVoltage ?: JSONObject.NULL).put("maxVoltage", record.stats.maxVoltage ?: JSONObject.NULL)
+            .put("minIat", record.stats.minIat ?: JSONObject.NULL).put("maxIat", record.stats.maxIat ?: JSONObject.NULL)
             .put("minCoolant", record.stats.minCoolant ?: JSONObject.NULL).put("maxCoolant", record.stats.maxCoolant ?: JSONObject.NULL)
             .put("averageLoad", record.stats.averageLoad ?: JSONObject.NULL).put("coveragePercent", record.summary.coveragePercent)
             .put("movingSeconds", record.stats.movingSeconds).put("idleSeconds", record.stats.idleSeconds)

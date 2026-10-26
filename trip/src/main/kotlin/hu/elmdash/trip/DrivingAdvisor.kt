@@ -47,7 +47,7 @@ class DrivingAdvisor {
     }
 
     fun update(telemetry: Telemetry, nowMs: Long): DrivingAdvice {
-        fun fresh(pid: Pid, maxAge: Long) = telemetry.readings[pid]?.fresh(nowMs, maxAge)
+        fun fresh(pid: Pid, maxAge: Long) = telemetry.readings[pid]?.measuredFresh(nowMs, maxAge)
         val rpm = fresh(Pid.RPM, 1_500)
         val speed = fresh(Pid.SPEED, 1_500)
         val load = fresh(Pid.LOAD, 2_500)

@@ -20,6 +20,8 @@ class MaintenanceWorker(context: Context, params: WorkerParameters) : CoroutineW
         val context = applicationContext
         val store = MaintenanceStore(context)
         val today = LocalDate.now()
+        if (hu.elmdash.trip.inspectionSoon(store.inspectionDue, today))
+            notify("inspection", "Műszaki vizsga esedékes", "Határidő: ${store.inspectionDue}. Egyeztess időpontot a vizsgára.")
         val due = store.latest().filter { it.soon(today,store.odometer) }
         if (due.isNotEmpty()) notify("service", "Szervizemlékeztető", due.joinToString(" • ") { it.name + if (it.due(today,store.odometer)) ": esedékes" else ": hamarosan" })
         val prefs = context.getSharedPreferences("elm-maintenance",Context.MODE_PRIVATE)
@@ -53,12 +55,13 @@ class MaintenanceWorker(context: Context, params: WorkerParameters) : CoroutineW
     }
     private fun notify(tag: String, title: String, text: String): Boolean {
         val context = applicationContext
+        CarAlertDisplay.notice(hu.elmdash.trip.VehicleAlert(tag,title,text))
         val manager = context.getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(NotificationChannel("maintenance","Szerviz és guminyomás",NotificationManager.IMPORTANCE_DEFAULT))
-        if (!manager.areNotificationsEnabled() || manager.getNotificationChannel("maintenance").importance == NotificationManager.IMPORTANCE_NONE) return false
+        manager.createNotificationChannel(NotificationChannel("maintenance-alerts-v2","Szerviz és guminyomás",NotificationManager.IMPORTANCE_HIGH))
+        if (!manager.areNotificationsEnabled() || manager.getNotificationChannel("maintenance-alerts-v2").importance == NotificationManager.IMPORTANCE_NONE) return false
         val open = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return false
         return runCatching {
-            manager.notify(tag,335,NotificationCompat.Builder(context,"maintenance").setSmallIcon(android.R.drawable.ic_dialog_info)
+            manager.notify(tag,335,NotificationCompat.Builder(context,"maintenance-alerts-v2").setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setOnlyAlertOnce(true).setAutoCancel(true)
                 .setContentIntent(PendingIntent.getActivity(context,335,open,PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)).build())
             true

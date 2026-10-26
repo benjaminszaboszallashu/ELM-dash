@@ -192,11 +192,10 @@ class DashboardController(
                         }
                     } catch (e: CancellationException) { throw e }
                     catch (e: Exception) {
-                        gapComputers()
+                        // Preserve original sample timestamps: short retries use at most 10 s of held data.
                         drivingAdvisor.reset()
                         attempts++
-                        mutableState.update { it.copy(telemetry = it.telemetry.clearValues(clock()),
-                            fuel = FuelReading(null, null, FuelSource.UNAVAILABLE), fuelDisplay = it.fuelDisplay.copy(fresh = false),
+                        mutableState.update { it.copy(
                             nowMs = clock(), trip = computer.summary,
                             today = calendarDate(), daily = dailyComputer().summary(calendarDate()),
                             driving = DrivingAdvice(),

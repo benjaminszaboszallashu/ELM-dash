@@ -13,6 +13,32 @@ class JourneyLogTest {
         source: FuelSource = FuelSource.MAP_ESTIMATE, runtime: Double? = null) =
         log.update(data(t, speed, rpm, runtime), FuelReading(rate, rate?.times(100 / speed), source), t, epoch + t, "Kalos")
 
+    @Test fun tankUsesLastRateAcrossTenSecondsButNotLonger() {
+        val log=JourneyLog();log.fullTank(epoch)
+        update(log,0,rate=6.0)
+        update(log,10000,rate=12.0)
+        assertEquals(6.0*10/3600,log.state.tank.consumedLiters,1e-9)
+        assertFalse(log.state.tank.hasGaps)
+        update(log,20001)
+        assertTrue(log.state.tank.hasGaps)
+        assertEquals(6.0*10/3600,log.state.tank.consumedLiters,1e-9)
+    }
+    @Test fun voltageAndIntakeRangesUseFreshSamplesAndResetForNextJourney() {
+        val log=JourneyLog()
+        fun sample(t:Long,voltage:Double,iat:Double,at:Long=t) {
+            val values=data(t).readings + mapOf(Pid.VOLTAGE to Reading(voltage,at,Quality.OK),Pid.IAT to Reading(iat,at,Quality.OK))
+            log.update(Telemetry(values),FuelReading(6.0,10.0,FuelSource.MAP_ESTIMATE),t,epoch+t,"Kalos")
+        }
+        sample(0,12.2,18.0); sample(1000,14.4,51.0)
+        sample(60_000,90.0,99.0,0)
+        val stats=log.state.active!!.stats
+        assertEquals(12.2,stats.minVoltage!!,0.0); assertEquals(14.4,stats.maxVoltage!!,0.0)
+        assertEquals(18.0,stats.minIat!!,0.0); assertEquals(51.0,stats.maxIat!!,0.0)
+        log.finish(JourneyEnd.STOPPED,epoch+60_000)
+        update(log,61_000)
+        assertNull(log.state.active!!.stats.minVoltage)
+        assertNull(log.state.active!!.stats.maxIat)
+    }
     @Test fun `receipt amount sets price for following trips without repricing old trips`() {
         val log=JourneyLog()
         log.fullTank(epoch,20.0,12000.0)

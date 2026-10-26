@@ -11,6 +11,32 @@ class TripTest {
     }
     private fun update(computer: TripComputer, time: Long, data: Telemetry) = computer.update(data, FuelCalculator.calculate(data, time, FuelSettings()), time)
 
+    @Test fun repeatedMissingSamplesUseOriginalDataUntilTenSeconds() {
+        val c=TripComputer()
+        var sample=data(0)
+        update(c,0,sample)
+        for(t in 250L..10000 step 250) {
+            sample=data(t,speed=null,rate=null).withLastKnown(sample)
+            update(c,t,sample)
+        }
+        assertEquals(6.0*10/3600,c.summary.fuelLiters,1e-9)
+        assertFalse(c.summary.hasGaps)
+        sample=data(10250,speed=null,rate=null).withLastKnown(sample)
+        update(c,10250,sample)
+        assertTrue(c.summary.hasGaps)
+        assertEquals(6.0*10/3600,c.summary.fuelLiters,1e-9)
+    }
+    @Test fun tenSecondHoldIntegratesPreviousValuesThenExpires() {
+        val c=TripComputer()
+        update(c,0,data(0))
+        update(c,10000,data(10000,speed=120.0,rate=12.0))
+        assertEquals(60.0*10/3600,c.summary.distanceKm,1e-9)
+        assertEquals(6.0*10/3600,c.summary.fuelLiters,1e-9)
+        assertFalse(c.summary.hasGaps)
+        update(c,20001,data(20001))
+        assertTrue(c.summary.hasGaps)
+        assertEquals(6.0*10/3600,c.summary.fuelLiters,1e-9)
+    }
     @Test fun `constant drive integrates liters and distance independently of update frequency`() {
         val c = TripComputer()
         for (time in 0L..60_000L step 250L) update(c, time, data(time, runtime = time / 1000.0))
@@ -39,7 +65,7 @@ class TripTest {
     }
     @Test fun `engine off and expired inputs`() {
         assertEquals(0.0, FuelCalculator.calculate(data(0, rpm = 0.0), 0, FuelSettings()).litersPerHour!!, 0.0)
-        assertNull(FuelCalculator.calculate(data(0), 6_000, FuelSettings()).litersPerHour)
+        assertNull(FuelCalculator.calculate(data(0), 10_001, FuelSettings()).litersPerHour)
     }
     @Test fun `gaps are excluded and average uses matched distance`() {
         val c = TripComputer()
@@ -70,7 +96,7 @@ class TripTest {
     }
     @Test fun `long scheduler pause is not interpolated`() {
         val c = TripComputer()
-        update(c, 0, data(0)); update(c, 10_000, data(10_000))
+        update(c, 0, data(0)); update(c, 10_001, data(10_001))
         assertEquals(0.0, c.summary.distanceKm, 0.0)
         assertTrue(c.summary.hasGaps)
     }

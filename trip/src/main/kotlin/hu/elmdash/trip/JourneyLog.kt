@@ -30,7 +30,9 @@ data class JourneyStats(
     val idleSeconds: Double = 0.0, val idleFuelLiters: Double = 0.0,
     val maxSpeed: Double? = null, val maxRpm: Double? = null,
     val minCoolant: Double? = null, val maxCoolant: Double? = null,
-    val loadIntegral: Double = 0.0, val loadSeconds: Double = 0.0
+    val loadIntegral: Double = 0.0, val loadSeconds: Double = 0.0,
+    val minVoltage: Double? = null, val maxVoltage: Double? = null,
+    val minIat: Double? = null, val maxIat: Double? = null
 ) { val averageLoad: Double? get() = if (loadSeconds > 0) loadIntegral / loadSeconds else null }
 
 data class JourneyRecord(
@@ -116,7 +118,7 @@ class JourneyLog(initial: JourneyLogState = JourneyLogState(), private val id: (
         val point = Point(now, v(Pid.RPM), v(Pid.SPEED), fuel.litersPerHour?.takeIf { it.isFinite() && it >= 0 }, v(Pid.LOAD))
         updateTank(point, fuel.source)
         val rpm = point.rpm
-        if (rpm != null) lastRpmAt = now
+        if (rpm != null) lastRpmAt = data.readings[Pid.RPM]?.lastKnownAtMs ?: now
         if (state.active == null) {
             if (rpm == null || rpm <= 0) { previous = null; return }
             computer = TripComputer()
@@ -135,10 +137,10 @@ class JourneyLog(initial: JourneyLogState = JourneyLogState(), private val id: (
         var stats = record.stats
         val dt = previous?.let { (now - it.at) / 1000.0 } ?: 0.0
         val prev = previous
-        if (prev != null && dt > 0 && dt <= 2) {
+        if (prev != null && dt > 0 && dt <= 10) {
             val speedOk = prev.speed != null && point.speed != null
             val idle = speedOk && prev.speed!! < 1 && point.speed!! < 1 && (prev.rpm ?: 0.0) > 0 && (rpm ?: 0.0) > 0
-            val moving = speedOk && (prev.speed!! + point.speed!!) / 2 >= 1
+            val moving = speedOk && (if (dt > 2) prev.speed!! else (prev.speed!! + point.speed!!) / 2) >= 1
             val loadOk = prev.load != null && point.load != null
             stats = stats.copy(
                 speedSeconds = stats.speedSeconds + if (speedOk) dt else 0.0,
@@ -151,7 +153,9 @@ class JourneyLog(initial: JourneyLogState = JourneyLogState(), private val id: (
         fun maximum(a: Double?, b: Double?) = if (a == null) b else if (b == null) a else maxOf(a, b)
         fun minimum(a: Double?, b: Double?) = if (a == null) b else if (b == null) a else minOf(a, b)
         stats = stats.copy(maxSpeed = maximum(stats.maxSpeed, point.speed), maxRpm = maximum(stats.maxRpm, rpm),
-            minCoolant = minimum(stats.minCoolant, v(Pid.COOLANT)), maxCoolant = maximum(stats.maxCoolant, v(Pid.COOLANT)))
+            minCoolant = minimum(stats.minCoolant, v(Pid.COOLANT)), maxCoolant = maximum(stats.maxCoolant, v(Pid.COOLANT)),
+            minVoltage = minimum(stats.minVoltage, v(Pid.VOLTAGE)), maxVoltage = maximum(stats.maxVoltage, v(Pid.VOLTAGE)),
+            minIat = minimum(stats.minIat, v(Pid.IAT)), maxIat = maximum(stats.maxIat, v(Pid.IAT)))
         state = state.copy(active = record.copy(updatedAtMs = wallMs, summary = summary, stats = stats,
             sources = record.sources + if (fuel.source in setOf(FuelSource.ECU, FuelSource.MAF_ESTIMATE, FuelSource.MAP_ESTIMATE)) setOf(fuel.source) else emptySet()))
         previous = point
@@ -166,9 +170,9 @@ class JourneyLog(initial: JourneyLogState = JourneyLogState(), private val id: (
         if (old.fullAtMs != null) {
             val prev = previousTank
             val dt = prev?.let { (p.at - it.at) / 1000.0 } ?: 0.0
-            val valid = prev != null && dt > 0 && dt <= 2 && prev.rate != null && p.rate != null
-            val amount = if (valid) (prev!!.rate!! + p.rate!!) / 2 * dt / 3600 else 0.0
-            val gap = (p.rpm ?: prev?.rpm ?: 0.0) > 0 && p.rate == null || prev != null && (dt > 2 || dt < 0)
+            val valid = prev != null && dt > 0 && dt <= 10 && prev.rate != null && p.rate != null
+            val amount = if (valid) (if (dt > 2) prev!!.rate!! else (prev!!.rate!! + p.rate!!) / 2) * dt / 3600 else 0.0
+            val gap = (p.rpm ?: prev?.rpm ?: 0.0) > 0 && p.rate == null || prev != null && (dt > 10 || dt < 0)
             state = state.copy(tank = old.copy(consumedLiters = old.consumedLiters + amount,
                 hasGaps = old.hasGaps || gap, containsEstimate = old.containsEstimate || (amount > 0 && source.estimated)))
         }

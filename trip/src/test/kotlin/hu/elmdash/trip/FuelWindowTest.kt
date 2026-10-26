@@ -49,7 +49,7 @@ class FuelWindowTest {
         val w = FuelWindow()
         w.update(f(4.0, source = FuelSource.MAP_ESTIMATE), 60.0, 0)
         assertEquals(FuelSource.MAP_ESTIMATE, w.update(f(5.0), 60.0, 1000).source)
-        assertEquals(9.0, w.update(f(9.0), 60.0, 5000).litersPerHour!!, 0.0)
+        assertEquals(9.0, w.update(f(9.0), 60.0, 11001).litersPerHour!!, 0.0)
         w.reset()
         assertEquals(2.0, w.update(f(2.0), 60.0, 6000).litersPerHour!!, 0.0)
     }

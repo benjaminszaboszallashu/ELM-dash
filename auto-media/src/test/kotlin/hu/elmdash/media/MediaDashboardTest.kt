@@ -90,7 +90,7 @@ class MediaDashboardTest {
 
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Test fun `coolant artwork turns grey even before advice tick catches up`() {
-        val state = live().copy(nowMs = 7_000)
+        val state = live().copy(nowMs = 12_000)
         val frame = MediaDashboard.frame(state)
         assertEquals(frame.tiles[0].color, frame.tiles[1].color)
         assertEquals("3200", frame.tiles[0].value)
@@ -152,7 +152,7 @@ class MediaDashboardTest {
         assertEquals(512, bitmap.width)
         assertEquals(512, bitmap.height)
         assertNotEquals(bitmap.getPixel(70, 50), bitmap.getPixel(70, 245))
-        val stale = DashboardTiles.compactOverview(state.copy(nowMs = 7_000,
+        val stale = DashboardTiles.compactOverview(state.copy(nowMs = 12_000,
             fuelDisplay = state.fuelDisplay.copy(fresh = false)))
         assertEquals(stale.getPixel(70, 50), stale.getPixel(70, 245))
         assertNotEquals(stale.getPixel(70, 50), stale.getPixel(300, 145)) // Stored daily aggregate remains valid.

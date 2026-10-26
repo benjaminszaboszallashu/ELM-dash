@@ -307,3 +307,30 @@ A parkolókártya Navigálás az autóhoz gombja vízszintesen középre igazít
 ### Gyalogos navigáció Google Maps alkalmazással
 
 Felhasználói kérésre a középre igazított gomb explicit com.google.android.apps.maps célcsomagnak küld google.navigation:q=lat,lon&mode=w intentet. A kiindulópontot a Maps az aktuális helyből kezeli. Az alkalmazáson belüli alaptérkép továbbra is OSM. Hiányzó/letiltott Google Maps esetén érthető üzenet, nincs csendes böngészős vagy autós navigációs fallback. Hivatalos specifikáció: https://developer.android.com/guide/components/google-maps-intents .
+
+
+## 0.18.0 — útrészletek és szerviznapló (2026-10-26)
+
+- Útidő, megfigyelt mozgás és alapjárat 60 perctől óra/perc/másodperc alakban; a telefonos és exportált HTML-ben is.
+- Az „akkutöltöttség” felhasználói pontosítása: az autó akkufeszültsége V-ban, nem telefonakku vagy becsült százalék. Útonként friss OBD feszültség- és IAT-minimum/maximum, mentés, HTML és CSV export. Régi utaknál ismeretlen érték marad, nincs utólagos rekonstrukció.
+- Szervizlista elvégzési dátum szerint csökkenően; szerkesztés külön ablakban, natív naptáras dátumválasztó. Opcionális strukturált Ft-költség, idei/tavalyi összegzés; régi megjegyzésből nincs automatikus árkinyerés. Hiányzó költséget jelezzük, nem számít ismert nullának.
+- Két választható dátum között indulási helyi nap alapján, mindkét határt beleértve a helyben megőrzött lezárt utak száma és km-összege. Legfeljebb 200 út; nem teljes kilométeróra-változás.
+- Műszaki határidő külön megadható. Sikeres vizsga dátumából 2 év az alap, hivatalos lejáratra módosítható. Hat héttel előtte és lejárat után napi WorkManager-ellenőrzés/értesítés (engedély szükséges), nem garantált pontos napszak. Határidő nem gördül tovább automatikusan.
+
+## 0.18.1 — járműriasztások
+
+Felhasználó kéri: töltési probléma, túlmelegedés, alacsony hatótáv, OBD-kapcsolatvesztés és szervizemlékeztetők értesítésben is. A telefonon magas fontosságú csatornák (rendszerengedély, csatornabeállítás, némítás/DND érvényes). Nincs teljes képernyős riasztás vagy rendszerbeállítás-megkerülés.
+
+Valódi, friss RPM>0 mellett: indítás után 30 s türelem, majd <13 V 30 s / <12 V 10 s; hűtőfolyadék >=103 °C 15 s / >=110 °C 5 s; becsült hatótáv <150 / <100 km 30 s. Új súlyosság külön kivárást igényel. Tartós hiba nem csipog másodpercenként; feloldás/újraélesítés 30 s egészséges érték után (>=13,3 V; <100 °C; >=170 km). Motorleállás/adathiány nem hibásan nulla feszültség. Demó nem riaszt. Ezek tanácsadó, autós próbát igénylő küszöbök, nem generátordiagnózis vagy akku-SOC.
+
+AA: a saját ELM médiakártya alsó szövegében a riasztás elsőbbséget kap a rádiónévvel szemben. Élő hibák fennállásig, kapcsolati/szerviz üzenetek 60 s-ig (élő hibák mögött). Ez NEM Waze fölötti Android Auto heads-up rendszerértesítés. Az AA csak korlátozott kategóriákat támogat; nem hamisítunk üzenetküldő/navigációs értesítést. Android Automotive OS autófigyelmeztetései nem azonosak a telefonról vetített Android Autóval.
+Forrás: https://developers.google.com/cars/design/android-auto/product-experience/system-ui/notifications
+
+## 0.18.2 — 10 másodperces utolsóérték-tartás
+
+Felhasználói kérésre a 2 s számítási határ 10 s. A PID utolsó sikeres mintája a saját eredeti időbélyegétől 10 s-ig használható a kijelzéshez/fogyasztáshoz/távolsághoz; NO DATA/ERROR nem frissíti ezt az időbélyeget. Nem támogatott PID nem lesz ismert adat. A 250 ms számítási ciklus tovább integrálja a tartott értéket; hosszabb, de <=10 s ütemezési szünetben az előző értéket használjuk (nem a később érkező új adatot visszamenőleg). 10 s felett a szakasz hiányos. Tartott adatokkal becslünk, nem új szenzormérést állítunk elő.
+
+Rövid automatikus újracsatlakozás nem hív azonnal gap()-et; a régi minták idő alapján járnak le. Kézi leállítás, folyamatújraindítás továbbra is megszakítás. A korábbi tank.hasGaps jelzést nem töröljük visszamenőleg. Riasztás és vezetési tanács továbbra is szigorú measuredFresh adatot kér, nem a visszatartott értéket tekinti új hibabizonyítéknak.
+
+## 0.19.0 — ChatGPT-s blokkfeldolgozás
+A korábbi helyi OCR-only döntést a felhasználó felülírta. Dokumentált Sign in with ChatGPT OSS belépés és közvetlen képes Responses-kérés; külön API-kulcs/fizetős fallback nincs. Részletek: [RECEIPT_CHATGPT.md](RECEIPT_CHATGPT.md). Fotó kiválasztás után külön feldolgozásgomb, minden eredmény kézzel ellenőrizhető. A tényleges belépési és blokkpróba státuszát a VALIDATION tartalmazza.

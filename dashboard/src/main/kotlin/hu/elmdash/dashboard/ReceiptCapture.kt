@@ -24,7 +24,7 @@ import java.io.File
 
 /** Bundled on-device OCR. The photo and recognized text are never persisted or sent to a backend. */
 @Composable
-internal fun ReceiptCapture(onSuggestion: (String, String, String) -> Unit, onBusy: (Boolean) -> Unit) {
+internal fun LocalReceiptCapture(onSuggestion: (String, String, String) -> Unit, onBusy: (Boolean) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val recognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }

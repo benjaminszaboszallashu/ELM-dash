@@ -395,3 +395,36 @@ MediaDebug build/lint sikeres, adatmegőrző telepítés sikeres. Telefonon a pa
 ## 2026-10-21 — feltöltés előtti teljes ellenőrzés
 
 A GitHub workflow teljes Gradle parancsa helyben sikeres: elm/obd/trip/traffic és connection/auto/auto-media tesztek, három debug lint, három debug build és phone release. A telefonos parkolási tesztelőnézet bezárva, Activity tesztextra nélkül újranyitva. Személyes adat, tesztkép, helykoordináta és buildtermék nem része a commitnak.
+
+## 0.18.0 — 2026-10-26: útmérések és szerviz
+
+- `:trip:test`, `:connection:testDebugUnitTest`, `:app:lintMediaDebug` sikeres. Új regresszió: friss feszültség/IAT szélsőértékek, elavult minták kizárása, új út nullázása; mentési kör és régi rekordok; dátumrendezés; inkluzív helyi dátumintervallum csak lezárt utakra; műszaki 42/43 napos határ és lejárt dátum.
+- PhoneDebug, UnsupportedDebug, MediaDebug és PhoneRelease build; `scripts/verify_variants.py` mind a négy változatra sikeres. `git diff --check` rendben.
+- HTML időformázó tényleges függvényével Node ellenőrzés: 3599, 3600, 6417 másodperc és null; 6417 → „1 ó 46 p 57 mp”.
+- Samsungon 0.18.0 telepítés adatmegőrzéssel. Szervizkártyák, külön szerkesztőablak és natív naptár megtekintve, mentés nélkül bezárva. Korábbi valódi út HTML-jében az óra/perc/másodperc és az új, régi úton ismeretlen (—) feszültség/IAT mezők vizuálisan ellenőrizve. Új kitalált út/szerviz nem került az adattárba.
+- Hátravan: új valódi úton feszültség/IAT tartomány autós összevetése, többnapos időzített műszaki értesítés. Műszaki határidőt a felhasználó ad meg; nem állítottunk be próbadátumot.
+
+## 0.18.1 — 2026-10-26: riasztások
+
+- Új VehicleAlerts tesztek: indítási türelem, 30/10 másodperces alacsony feszültség, külön súlyosbodási kivárás, tartós hiba egyszeri jelzése, egészséges értéknél újraélesítés, hiányzó minta és motorleállás, egymástól független hőfok/hatótáv.
+- Robolectric értesítésteszt: magas fontosságú csatorna, rendes ERROR kategória, cím; AA szövegben élő hiba elsőbbsége és kapcsolatjelzés törlése. Nincs hamis üzenetküldő vagy navigációs kategória.
+- Valódi generátorhibát/túlmelegedést nem idéztünk elő. A Carpuride megjelenítése és a hang autós próba nélkül nem igazolt; általános AA heads-up értesítés nem támogatott, csak saját média-kártyás figyelmeztetés készült.
+- A trip/connection/auto-media összesen 158 tesztje sikeres, a négy alkalmazásváltozat buildje és izolációja sikeres. Samsungon 0.18.1-aa-media adatmegőrző frissítés sikeres, POST_NOTIFICATIONS engedély megadva. A végső szervizcsatorna-egyeztetés után mediaDebug újrafordítva és ismét telepítve.
+
+## 0.18.2 — 2026-10-26: 10 s mérési türelem
+
+- OBD/trip/connection/auto-media tesztek és mediaDebug build/lint sikeres. Új tesztek: NO DATA/ERROR megtartott sikeres időbélyeg; 10 000 ms még használható, 10 001 ms már nem; ismételt hiba nem hosszabbít; kézi törlés megszünteti a tartást; eltérő következő minta nem módosítja visszamenőleg a szünet számítását; út és tank egyező 10 s határ; folyamatos ticker melletti hiány/lejárat.
+- Az út háromperces kapcsolathiány-határa az eredeti RPM-mérés idejétől számít, nem a tartott érték utolsó felhasználásától. Meglévő kapcsolatlezárás/értesítés regresszió sikeres.
+- AA elavulási tesztek az új 10 s időablakhoz igazítva. Riasztások és vezetési tanácsok measuredFresh értékeket kérnek. Autós szakadozó OBD-próba még nem történt.
+
+## 0.19.0 — 2026-10-26: ChatGPT-blokkfeldolgozás
+
+- Connection egységtesztek, mediaDebug build/lint, phoneDebug, unsupportedDebug és phoneRelease build sikeres; négy változat izolációja és diff whitespace ellenőrzése sikeres.
+- Samsungon adatmegőrző telepítés, hivatalos ChatGPT dinamikus regisztráció, felhasználói engedélyezés, ellenőrzött bejelentkezés és modellkatalógus betöltése sikeres. Fiókadat és blokkfotó nincs a repóban.
+- A felhasználó által kiválasztott valódi blokk első feldolgozása hibával végződött; mezők nem töltődtek ki, tankolás nem lett elmentve. Pontosabb, érzékeny adatokat nem tartalmazó hibajelzés telepítve; az ismételt telefonos próba folyamatban. A végponttól végpontig működő felismerés még nem igazolt.
+
+### Telefonos blokkpróba — sikeres javítás után
+
+- A Responses adatfolyam lezáró eseményének output tömbje nem tartalmazta a korábban közölt szöveget. Az output_text.done/delta események összegyűjtése megoldotta a hibát; kizárólag response.completed siker után tölthetők ki a mezők. Csonka/failed válasz továbbra is elutasított. Regressziós tesztek sikeresek.
+- Felhasználó által kiválasztott valódi blokk: ChatGPT-fiókkal végponttól végpontig feldolgozva, üzemanyag/liter/kedvezmény utáni összeg kitöltve, más termék és külön kedvezménye a modell magyarázata szerint kizárva. A forrásfotóhoz viszonyított helyességet a felhasználónak kell jóváhagynia; a fejlesztő csak a kitöltött mezőket és az összesítőt ellenőrizte.
+- Telefonos ellenőrző képernyő megtekintve; teletank megerősítés és mentés nem történt, a felület jóváhagyásra nyitva maradt. Valódi blokk, felismert személyes adatok és telefonos screenshot nem került a repóba.

@@ -49,7 +49,7 @@ class RepositoryTest {
         assertFalse(commands.contains("0142"))
     }
 
-    @Test fun `NO DATA clears previous value and transient failures are reprobed`() = runTest {
+    @Test fun `NO DATA holds previous value for ten seconds without changing observation time`() = runTest {
         var now = 0L
         var rpmCalls = 0
         val transport = object : ElmTransport {
@@ -66,7 +66,8 @@ class RepositoryTest {
         repo.discover(); repo.pollNext(); repo.pollNext()
         assertEquals(800.0, repo.telemetry.value(Pid.RPM, now)!!, 0.0)
         now = 600; repo.pollNext()
-        assertNull(repo.telemetry.value(Pid.RPM, now))
+        assertEquals(800.0, repo.telemetry.value(Pid.RPM, now)!!, 0.0)
+        assertNull(repo.telemetry.value(Pid.RPM, 10001))
         assertEquals(800.0, repo.telemetry.readings[Pid.RPM]!!.lastKnownValue!!, 0.0)
         assertEquals(Quality.NO_DATA, repo.telemetry.readings[Pid.RPM]!!.quality)
     }

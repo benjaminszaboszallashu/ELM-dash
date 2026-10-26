@@ -74,16 +74,17 @@ object AutoObd {
     fun backgroundAllowed(context: Context): Boolean = context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
 
     fun alert(context: Context, detail: String) {
+        CarAlertDisplay.notice(hu.elmdash.trip.VehicleAlert("connection", "Nincs kapcsolat az autóval", detail))
         val manager = context.getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(NotificationChannel("obd-alert", "Nincs kapcsolat az autóval", NotificationManager.IMPORTANCE_DEFAULT))
+        manager.createNotificationChannel(NotificationChannel("obd-alert-v2", "Nincs kapcsolat az autóval", NotificationManager.IMPORTANCE_HIGH))
         val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
         val open = PendingIntent.getActivity(context, 73, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        runCatching { manager.notify(329, NotificationCompat.Builder(context, "obd-alert")
+        runCatching { manager.notify(329, NotificationCompat.Builder(context, "obd-alert-v2")
             .setSmallIcon(android.R.drawable.stat_sys_warning).setContentTitle("Nincs kapcsolat az autóval")
             .setContentText(detail).setStyle(NotificationCompat.BigTextStyle().bigText(detail))
             .setContentIntent(open).setAutoCancel(true).setOnlyAlertOnce(true).build()) }
     }
-    fun clearAlert(context: Context) { context.getSystemService(NotificationManager::class.java).cancel(329) }
+    fun clearAlert(context: Context) { CarAlertDisplay.clear("connection"); context.getSystemService(NotificationManager::class.java).cancel(329) }
 }
 
 internal object AutoObdPolicy {

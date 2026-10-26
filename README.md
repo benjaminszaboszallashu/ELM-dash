@@ -407,3 +407,7 @@ A 0.10-es verzió útlezáráskor telefonos értesítést küld a km / liter / l
 Az alsó menü: **Műszerfal · Napló · Rádió** (a rádió nélküli változatban két pont). A jobb felső fogaskerék nyitja a Kapcsolatot, innen a fogyasztási profil és a kalibráció is elérhető. A Napló egyesíti a mai összesítést, a folyamatban lévő utat, a tankolást és az úttörténetet. A napi kártya részletei lenyithatók. A rendszer vissza gombja visszavezet a beállításokból az előző lapra.
 
 A 0.12.1 a felhasználó kérésére az ár nélküli régi utakhoz is egyszer rögzíti a frissen letöltött aktuális benzinárat. A meglévő árak változatlanok; az utólagos rögzítés külön jelzett. Hiányzó literadat helyére nem ír kitalált fogyasztást.
+
+### ChatGPT-s blokkbeolvasás (0.19.0)
+
+A tankolási blokk fotójából ChatGPT-belépéssel kérhető az üzemanyag, liter és kedvezmény utáni összeg felismerése. A fotó csak a külön feldolgozásgombbal kerül az OpenAI-hoz; mentés előtt ellenőrzés és teletank-megerősítés szükséges. A helyi OCR és kézi bevitel megmaradt. [Beállítás, működés és adatkezelés](docs/RECEIPT_CHATGPT.md).

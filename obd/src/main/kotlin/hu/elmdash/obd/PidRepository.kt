@@ -75,10 +75,10 @@ class PidRepository(private val session: ElmSession, private val clock: () -> Lo
         }
         val failures = if (value == null) (misses[pid] ?: 0) + 1 else 0
         misses[pid] = failures
-        // Unsupported/transient NO DATA is re-probed slowly; stale numbers are never retained.
+        // Transient NO DATA is re-probed; held values retain the last successful timestamp and expire after 10 s.
         nextDue[pid] = clock() + if (failures >= 3) 15_000 else pid.intervalMs
         val lastKnown = value ?: telemetry.readings[pid]?.lastKnownValue
-        telemetry = telemetry.copy(readings = telemetry.readings + (pid to Reading(value, clock(), quality, source, lastKnown)))
+        telemetry = telemetry.copy(readings = telemetry.readings + (pid to Reading(value, clock(), quality, source, lastKnown, if (value != null) clock() else telemetry.readings[pid]?.lastKnownAtMs)))
         // ATRV alone is not evidence that the ECU is responding.
         if (clock() - lastEcuResponse > 30_000) throw IOException("Az ECU 30 másodperce nem válaszol. Gyújtás / adapter ellenőrzése.")
         return telemetry

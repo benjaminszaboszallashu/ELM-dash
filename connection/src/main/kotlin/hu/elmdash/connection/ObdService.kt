@@ -19,6 +19,8 @@ class ObdService : Service() {
     private val parking by lazy { ParkingTracker(this) }
     private val routeGps by lazy { RouteGps(this) }
     private var gpsJob: Job? = null
+    private val vehicleAlerts = hu.elmdash.trip.VehicleAlerts()
+    private val vehicleNotifications by lazy { VehicleNotifications(this) }
 
     override fun onBind(intent: Intent?) = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -47,6 +49,12 @@ class ObdService : Service() {
                             if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
                         locationStarted = true
                     }
+                    val live = state.phase == Phase.LIVE && !state.simulated
+                    val t = state.telemetry
+                    val result = vehicleAlerts.tick(state.nowMs, live && (t.readings[hu.elmdash.obd.Pid.RPM]?.measuredFresh(state.nowMs) ?: 0.0)>0,
+                        t.readings[hu.elmdash.obd.Pid.VOLTAGE]?.measuredFresh(state.nowMs), t.readings[hu.elmdash.obd.Pid.COOLANT]?.measuredFresh(state.nowMs), state.range.km)
+                    CarAlertDisplay.live = result.active
+                    result.raised.forEach { vehicleNotifications.show(it) }
                     parking.tick(state, locationStarted && RouteGps.allowed(this@ObdService))
                     routeGps.tick(locationStarted && controller.routeConfig().record && RouteJson.running(state), state.nowMs)
                     controller.routeLocation = routeGps.location
@@ -125,6 +133,7 @@ class ObdService : Service() {
     }
 
     override fun onDestroy() {
+        CarAlertDisplay.live = emptyList()
         scope.cancel()
         parking.stop()
         routeGps.stop(); controller.routeLocation = null

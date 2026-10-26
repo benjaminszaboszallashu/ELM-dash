@@ -16,8 +16,8 @@ class FuelWindow(private val windowMs: Long = 10_000) {
             return fuel.copy(litersPerHour = null, litersPer100Km = null)
         }
         val last = points.lastOrNull()
-        // No interpolation through missing observations, reconnects, or clock resets.
-        if (last != null && (nowMs < last.time || nowMs - last.time > 2_000)) reset()
+        // Only short pauses are held; longer gaps and clock resets discard the window.
+        if (last != null && (nowMs < last.time || nowMs - last.time > 10_000)) reset()
         if (points.lastOrNull()?.time == nowMs) points.removeLast()
         points.addLast(Point(nowMs, rate, speed, fuel.source))
         val cutoff = nowMs - windowMs
@@ -29,11 +29,14 @@ class FuelWindow(private val windowMs: Long = 10_000) {
             val begin = maxOf(a.time, cutoff)
             if (b.time <= begin) continue
             val fraction = (begin - a.time).toDouble() / (b.time - a.time)
-            val beginRate = a.rate + (b.rate - a.rate) * fraction
-            val beginSpeed = a.speed + (b.speed - a.speed) * fraction
+            val held = b.time - a.time > 2_000
+            val endRate = if (held) a.rate else b.rate
+            val endSpeed = if (held) a.speed else b.speed
+            val beginRate = a.rate + (endRate - a.rate) * fraction
+            val beginSpeed = a.speed + (endSpeed - a.speed) * fraction
             val dt = (b.time - begin).toDouble()
-            fuelIntegral += (beginRate + b.rate) * 0.5 * dt
-            speedIntegral += (beginSpeed + b.speed) * 0.5 * dt
+            fuelIntegral += (beginRate + endRate) * 0.5 * dt
+            speedIntegral += (beginSpeed + endSpeed) * 0.5 * dt
             duration += dt
         }
         if (duration == 0.0) return fuel // First sample: use the available observation, no invented history.

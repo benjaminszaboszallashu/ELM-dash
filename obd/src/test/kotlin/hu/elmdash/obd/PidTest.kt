@@ -19,9 +19,18 @@ class PidTest {
         assertNull(Pid.RPM.decode(listOf(0)))
         assertNull(Pid.COOLANT.decode(listOf(-1)))
         val r = Reading(800.0, 1_000, Quality.OK)
-        assertNull(r.fresh(6_001)); assertNull(r.fresh(999))
+        assertNull(r.fresh(11_001)); assertNull(r.fresh(999))
         assertEquals(800.0, r.fresh(2_000)!!, 0.0)
-        assertNull(r.copy(quality = Quality.ERROR).fresh(2_000))
+        assertEquals(800.0, r.copy(quality = Quality.ERROR).fresh(2_000)!!, 0.0)
+    }
+    @Test fun heldValuesExpireFromLastSuccessfulSampleNotLastFailure() {
+        val old=Telemetry(mapOf(Pid.RPM to Reading(800.0,1000,Quality.OK)))
+        val failed=Telemetry(mapOf(Pid.RPM to Reading(null,9000,Quality.ERROR))).withLastKnown(old)
+        val failedAgain=Telemetry(mapOf(Pid.RPM to Reading(null,11000,Quality.NO_DATA))).withLastKnown(failed)
+        assertEquals(800.0,failedAgain.value(Pid.RPM,11000)!!,0.0)
+        assertNull(failedAgain.value(Pid.RPM,11001))
+        assertNull(failedAgain.readings[Pid.RPM]!!.measuredFresh(11000))
+        assertNull(old.clearValues(2000).value(Pid.RPM,2000))
     }
     @Test fun `support masks preserve MSB ordering and continuation`() {
         assertEquals(setOf(1, 32), PidRepository.supportedBy(0, listOf(0x80, 0, 0, 1)))

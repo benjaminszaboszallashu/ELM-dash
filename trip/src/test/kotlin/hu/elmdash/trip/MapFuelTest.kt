@@ -33,7 +33,7 @@ class MapFuelTest {
     }
     @Test fun `missing stale or unsupported MAP inputs never use a guessed temperature`() {
         for (pid in listOf(Pid.RPM, Pid.MAP, Pid.IAT)) {
-            for (bad in listOf(Reading(null, 0, Quality.UNSUPPORTED), Reading(30.0, -6000, Quality.OK), Reading(Double.NaN, 0, Quality.OK))) {
+            for (bad in listOf(Reading(null, 0, Quality.UNSUPPORTED), Reading(30.0, -10001, Quality.OK), Reading(Double.NaN, 0, Quality.OK))) {
                 val d = data().let { it.copy(readings = it.readings + (pid to bad)) }
                 val f = FuelCalculator.calculate(d, 0, settings)
                 assertNull("$pid $bad", f.litersPerHour)

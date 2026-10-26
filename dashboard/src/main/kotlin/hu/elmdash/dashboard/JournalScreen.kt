@@ -32,7 +32,7 @@ private fun value(n: Double?, digits: Int = 1) = n?.let { String.format(Locale.f
 private fun date(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy.MM.dd. HH:mm"))
 private fun duration(seconds: Double): String {
     val minutes = seconds.toLong() / 60
-    return if (minutes >= 60) "${minutes / 60} ó ${minutes % 60} p" else "$minutes p ${seconds.toLong() % 60} mp"
+    return if (minutes >= 60) "${minutes / 60} ó ${minutes % 60} p ${seconds.toLong() % 60} mp" else "$minutes p ${seconds.toLong() % 60} mp"
 }
 
 @Composable

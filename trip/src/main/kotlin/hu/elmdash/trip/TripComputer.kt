@@ -19,7 +19,7 @@ data class TripSummary(
     val coveragePercent: Double get() = if (observedSeconds > 0) (coveredSeconds * 100 / observedSeconds).coerceIn(0.0, 100.0) else 0.0
 }
 
-/** Monotonic clock, trapezoidal integration; missing intervals are omitted, never invented. */
+/** Monotonic clock; normal samples use trapezoids, short pauses hold the previous value for at most 10 s. */
 class TripComputer(initial: TripSummary = TripSummary(), private val resetOnEngineRestart: Boolean = true) {
     var engineRestarted = false
         private set
@@ -76,11 +76,11 @@ class TripComputer(initial: TripSummary = TripSummary(), private val resetOnEngi
         val prev = previous
         if (prev != null) {
             val dt = (nowMs - prev.time) / 1000.0
-            if (dt > 0 && dt <= 2.0) {
+            if (dt > 0 && dt <= 10.0) {
                 val speedOk = prev.speed != null && point.speed != null
                 val fuelOk = prev.rate != null && point.rate != null
-                val distance = if (speedOk) (prev.speed!! + point.speed!!) / 2 * dt / 3600 else 0.0
-                val liters = if (fuelOk) (prev.rate!! + point.rate!!) / 2 * dt / 3600 else 0.0
+                val distance = if (speedOk) (if (dt > 2) prev.speed!! else (prev.speed!! + point.speed!!) / 2) * dt / 3600 else 0.0
+                val liters = if (fuelOk) (if (dt > 2) prev.rate!! else (prev.rate!! + point.rate!!) / 2) * dt / 3600 else 0.0
                 val paired = speedOk && fuelOk
                 summary = summary.copy(
                     distanceKm = summary.distanceKm + distance,
@@ -91,7 +91,7 @@ class TripComputer(initial: TripSummary = TripSummary(), private val resetOnEngi
                     coveredSeconds = summary.coveredSeconds + if (paired) dt else 0.0,
                     hasGaps = summary.hasGaps || !paired
                 )
-            } else if (dt > 2) {
+            } else if (dt > 10) {
                 summary = summary.copy(hasGaps = true, observedSeconds = summary.observedSeconds + dt)
             }
         }

@@ -1,6 +1,6 @@
 # Fejlesztő agentek belépési pontja
 
-Ez az ELM Dash Android-projekt. A felhasználó elsődleges célpontja **Android Auto**, a telefon kísérőfelület. Az aktuális átadás dátuma 2026-10-21, appverzió 0.17.4.
+Ez az ELM Dash Android-projekt. A felhasználó elsődleges célpontja **Android Auto**, a telefon kísérőfelület. Az aktuális átadás dátuma 2026-10-26, appverzió 0.19.0.
 
 ## Kezdés
 
@@ -50,3 +50,9 @@ A Napló útrészletei teljes képernyős ablakban, helyben generált HTML/Leafl
 ## Útinform 0.16
 
 Lásd [TRAFFIC.md](docs/TRAFFIC.md). Külön opt-in helyfigyelés, titkosított NAP URL, GPS csak memóriában. Nem ismeri a Waze útvonalát, nincs útillesztés; TMC/OpenLR eseményt nem szabad kitalált koordinátával megjeleníteni. A médiafelület és az éles NAP még autós/adatforrás-próbát igényel. A `:traffic:test` is része a CI-nek.
+
+## 0.18.2 — rövid mérési kimaradás
+Felhasználói kérésre 10 s-ig az utolsó sikeres érték használható a kijelzésben és a fogyasztás/táv számításában. Eredeti mérési időbélyeg marad; hiba nem hosszabbítja meg. 10 s felett hiányos adat; explicit leállítás/új folyamat nem áthidalható. Hibariasztás továbbra is ténylegesen friss mérést használ.
+
+## 0.19.0 — blokkfeldolgozás ChatGPT-belépéssel
+Lásd [RECEIPT_CHATGPT.md](docs/RECEIPT_CHATGPT.md). Felhasználói döntés: felhős képfelismerés a ChatGPT-csomag keretéből, külön API-ra automatikus váltás nélkül. Fotó csak explicit feldolgozásra küldhető; eredmény szerkeszthető javaslat, mentéshez teletank megerősítés szükséges. Tokeneket/nyugtákat soha ne commitolj. Helyi OCR megmarad.
